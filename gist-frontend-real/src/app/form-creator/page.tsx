@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState, useEffect } from 'react';
 import ResponsiveMenuBar from '@/components/nav-bar';
 import Footer from '@/components/footer';
@@ -9,6 +9,8 @@ export default function Home() {
   const [questionList, setQuestionList] = useState<{ id: number, type: 'SAQ' | 'MultipleChoice' }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [title, setTitle] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(true);
 
   const handleButtonClick = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -35,6 +37,10 @@ export default function Home() {
     setShowDeleteMenu(false);
   };
 
+  const handleTitleSubmit = () => {
+    setIsEditingTitle(false);
+  };
+
   useEffect(() => {
     const handleClickOutside = () => {
       setShowMenu(false);
@@ -53,10 +59,29 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col" onClick={(e) => e.stopPropagation()}>
       <ResponsiveMenuBar />
-      <main className="flex-grow flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold mb-4">Welcome to form-creator</h1>
-          <p className="text-2xl">This is the future of education...</p>
+      <main className="flex-grow flex items-center justify-center bg-gray-900 p-4 sm:p-12">
+        <div className="text-center w-full max-w-4xl">
+          <div className="flex flex-col items-center justify-center">
+            {isEditingTitle ? (
+              <>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter title here"
+                  className="text-3xl sm:text-6xl font-bold mb-4 text-black p-2 rounded text-center w-full sm:w-auto"
+                />
+                <button
+                  onClick={handleTitleSubmit}
+                  className="bg-blue-500 text-white px-4 py-2 rounded ml-0 sm:ml-2 mt-2 sm:mt-0 m-8"
+                >
+                  Submit
+                </button>
+              </>
+            ) : (
+              <h1 className="text-3xl sm:text-6xl font-bold mb-4">{title}</h1>
+            )}
+          </div>
           {questionList.map((question) => (
             <div className='p-4' key={question.id}>
               {question.type === 'SAQ' ? <SAQ /> : <MultipleChoice />}
@@ -77,30 +102,30 @@ export default function Home() {
             </button>
           </div>
           {showMenu && (
-            <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded shadow-lg w-128" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded shadow-lg w-64 sm:w-128" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={addSAQ}
-                className="bg-green-500 text-white px-4 py-2 rounded m-2"
+                className="bg-green-500 text-white px-4 py-2 rounded m-2 w-full"
               >
                 Add SAQ
               </button>
               <button
                 onClick={addMultipleChoice}
-                className="bg-green-500 text-white px-4 py-2 rounded m-2"
+                className="bg-green-500 text-white px-4 py-2 rounded m-2 w-full"
               >
                 Add Multiple Choice
               </button>
             </div>
           )}
           {showDeleteMenu && (
-            <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded shadow-lg w-128" onClick={(e) => e.stopPropagation()}>
+            <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 bg-white p-2 rounded shadow-lg w-64 sm:w-128" onClick={(e) => e.stopPropagation()}>
               {questionList.map((question) => (
                 <button
                   key={question.id}
                   onClick={() => deleteQuestion(question.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded m-2"
+                  className="bg-red-500 text-white px-4 py-2 rounded m-2 w-full"
                 >
-                  Delete {question.type} {question.id + 1}
+                  Delete {question.type} {question.id}
                 </button>
               ))}
             </div>
