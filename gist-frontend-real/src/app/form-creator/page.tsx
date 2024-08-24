@@ -9,7 +9,6 @@ export default function Home() {
 
   const handleButtonClick = () => {
     setSaqList([...saqList, saqList.length]);
-    setSaqList([saqList.length, ...saqList]);
   };
 
   return (
@@ -26,7 +25,7 @@ export default function Home() {
             +
           </button>
           {saqList.map((id) => (
-            <div className='p-4'>
+            <div className='p-4' key={id}>
             <SAQ key={id} />
             </div>
           ))}
