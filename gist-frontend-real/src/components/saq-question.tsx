@@ -4,24 +4,33 @@ const SAQ = () => {
   const [submitted, setSubmitted] = useState(false);
   const [question, setQuestion] = useState('');
   const [gist, setGist] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleSubmit = () => {
     setSubmitted(true);
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
   };
 
   return (
     <>
-      {submitted ? (
+      {submitted && !isEditing ? (
         <>
-        <div className="flex flex-col items-center space-y-4 pb-2">
-          <div className="text-white rounded w-full text-left text-3xl">
-            {question}
-          </div>
+          <div className="flex flex-col items-center space-y-4 pb-2">
+            <div className="text-white rounded w-full text-left text-3xl flex justify-between items-center">
+              {question}
+              <button onClick={handleEdit} className="ml-2 text-blue-500">
+                ✏️
+              </button>
+            </div>
           </div>
           <div className="flex flex-col items-center space-y-4">
-          <div className="text-white border border-gray-300 p-2 rounded w-full text-left">
-            {gist}
-          </div>
+            <div className="text-white border border-gray-300 p-2 rounded w-full text-left">
+              {gist}
+            </div>
           </div>
         </>
       ) : (
@@ -47,7 +56,7 @@ const SAQ = () => {
               !question || !gist ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-500 text-white'
             }`}
           >
-            Add Question
+            {isEditing ? 'Save' : 'Add Question'}
           </button>
         </div>
       )}

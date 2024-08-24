@@ -5,6 +5,7 @@ const MultipleChoice = () => {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [correctOptions, setCorrectOptions] = useState<number[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
@@ -34,16 +35,24 @@ const MultipleChoice = () => {
 
   const handleSubmit = () => {
     setSubmitted(true);
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
   };
 
   return (
     <>
-      {submitted ? (
+      {submitted && !isEditing ? (
         <>
-            <div className="flex flex-col items-center space-y-4 padding pb-2">
-          <div className="text-white rounded w-full text-left text-3xl">
-            {question}
-          </div>
+          <div className="flex flex-col items-center space-y-4 padding pb-2">
+            <div className="text-white rounded w-full text-left text-3xl flex justify-between items-center">
+              {question}
+              <button onClick={handleEdit} className="ml-2 text-blue-500">
+                ✏️
+              </button>
+            </div>
           </div>
           <div className="flex flex-col items-center space-y-2">
             {options.map((option, index) => (
@@ -51,11 +60,10 @@ const MultipleChoice = () => {
                 {option} {correctOptions.includes(index) && '(Correct)'}
               </div>
             ))}
-            </div>
+          </div>
         </>
       ) : (
         <div className="flex flex-col items-center space-y-4">
-        <>
           <input
             type="text"
             placeholder="Enter your question"
@@ -93,16 +101,17 @@ const MultipleChoice = () => {
               Add Option
             </button>
           )}
-          <button
-            onClick={handleSubmit}
-            disabled={!question || options.some((option) => !option)}
-            className={`px-4 py-3 rounded mt-4 ${
-              !question || options.some((option) => !option) ? 'bg-gray-500 cursor-not-allowed' : 'bg-blue-500 text-white'
-            }`}
-          >
-            Add Question
-          </button>
-        </>
+<button
+  onClick={handleSubmit}
+  disabled={!question || options.some((option) => !option) || correctOptions.length === 0}
+  className={`px-4 py-3 rounded mt-4 ${
+    !question || options.some((option) => !option) || correctOptions.length === 0
+      ? 'bg-gray-500 cursor-not-allowed'
+      : 'bg-blue-500 text-white'
+  }`}
+>
+  {isEditing ? 'Save' : 'Add Question'}
+</button>
         </div>
       )}
     </>
