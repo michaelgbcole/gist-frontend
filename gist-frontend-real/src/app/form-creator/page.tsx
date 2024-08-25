@@ -10,6 +10,8 @@ interface Question {
   type: 'SAQ' | 'MultipleChoice';
   question?: string;
   gist?: string;
+  options?: string[];
+  correctOptions?: number[];
 }
 
 export default function Home() {
@@ -52,22 +54,33 @@ export default function Home() {
       console.log('Publishing...');
       questionList.forEach((q) => {
         if (q.type === 'SAQ') {
-          console.log(`Question ${q.id}:`);
+          console.log(`SAQ Question ${q.id}:`);
           console.log(`Question: ${q.question}`);
           console.log(`Gist: ${q.gist}`);
+        } else if (q.type === 'MultipleChoice') {
+          console.log(`Multiple Choice Question ${q.id}:`);
+          console.log(`Question: ${q.question}`);
+          console.log(`Options: ${q.options?.join(', ')}`);
+          console.log(`Correct Options: ${q.correctOptions?.join(', ')}`);
         }
       });
     };
 
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
-        setQuestionList((prevList) =>
-          prevList.map((q) =>
-            q.id === id ? { ...q, type: 'SAQ', question, gist } : q
-          )
-        );
-      };
-      
-      
+      setQuestionList((prevList) =>
+        prevList.map((q) =>
+          q.id === id ? { ...q, type: 'SAQ', question, gist } : q
+        )
+      );
+    };
+
+    const handleMCUpdate = (id: number, question: string, options: string[], correctOptions: number[]) => {
+      setQuestionList((prevList) =>
+        prevList.map((q) =>
+          q.id === id ? { ...q, type: 'MultipleChoice', question, options, correctOptions } : q
+        )
+      );
+    };
   
     useEffect(() => {
       const handleClickOutside = () => {
@@ -115,7 +128,7 @@ export default function Home() {
                 {question.type === 'SAQ' ? (
                   <SAQ id={question.id} onUpdate={handleSAQUpdate} />
                 ) : (
-                  <MultipleChoice />
+                  <MultipleChoice id={question.id} onUpdate={handleMCUpdate} />
                 )}
               </div>
             ))}
