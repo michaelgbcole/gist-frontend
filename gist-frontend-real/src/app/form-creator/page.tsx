@@ -4,6 +4,9 @@ import ResponsiveMenuBar from '@/components/nav-bar';
 import Footer from '@/components/footer';
 import SAQ from '@/components/saq-question';
 import MultipleChoice from '@/components/mc-question';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 interface Question {
   id: number;
@@ -50,22 +53,26 @@ export default function Home() {
       setIsEditingTitle(false);
     };
   
-    const handlePublish = () => {
-      console.log('Publishing...');
-      questionList.forEach((q) => {
-        if (q.type === 'SAQ') {
-          console.log(`SAQ Question ${q.id}:`);
-          console.log(`Question: ${q.question}`);
-          console.log(`Gist: ${q.gist}`);
-        } else if (q.type === 'MultipleChoice') {
-          console.log(`Multiple Choice Question ${q.id}:`);
-          console.log(`Question: ${q.question}`);
-          console.log(`Options: ${q.options?.join(', ')}`);
-          console.log(`Correct Options: ${q.correctOptions?.join(', ')}`);
+    const handlePublish = async () => {
+        console.log('Publishing...');
+        try {
+          const response = await fetch('/api/publish', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ title, questionList }),
+          });
+      
+          if (response.ok) {
+            console.log('Publish successful');
+          } else {
+            console.error('Error publishing:', await response.json());
+          }
+        } catch (error) {
+          console.error('Error publishing:', error);
         }
-      });
-    };
-
+      };
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
       setQuestionList((prevList) =>
         prevList.map((q) =>
@@ -73,7 +80,7 @@ export default function Home() {
         )
       );
     };
-
+  
     const handleMCUpdate = (id: number, question: string, options: string[], correctOptions: number[]) => {
       setQuestionList((prevList) =>
         prevList.map((q) =>
@@ -114,9 +121,9 @@ export default function Home() {
                   />
                   <button
                     onClick={handleTitleSubmit}
-                    className="bg-blue-500 text-white px-4 py-2 rounded ml-0 sm:ml-2 mt-2 sm:mt-0 m-8"
+                    className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
                   >
-                    Submit
+                    Add Title
                   </button>
                 </>
               ) : (
@@ -188,4 +195,4 @@ export default function Home() {
         <Footer />
       </div>
     );
-}
+  }
