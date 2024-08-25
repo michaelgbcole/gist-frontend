@@ -14,6 +14,12 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Form {
+  id          Int       @id @default(autoincrement())
+  title       String
+  questionIds Int[]
+}
+
 model SAQ {
   id          Int       @id @default(autoincrement())
   question    String
