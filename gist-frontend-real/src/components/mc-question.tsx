@@ -1,6 +1,13 @@
+
+
 import React, { useState } from 'react';
 
-const MultipleChoice = () => {
+interface MultipleChoiceProps {
+  id: number;
+  onUpdate: (id: number, question: string, options: string[], correctOptions: number[]) => void;
+}
+
+const MultipleChoice: React.FC<MultipleChoiceProps> = ({ id, onUpdate }) => {
   const [submitted, setSubmitted] = useState(false);
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
@@ -36,6 +43,7 @@ const MultipleChoice = () => {
   const handleSubmit = () => {
     setSubmitted(true);
     setIsEditing(false);
+    onUpdate(id, question, options, correctOptions);
   };
 
   const handleEdit = () => {
@@ -101,17 +109,17 @@ const MultipleChoice = () => {
               Add Option
             </button>
           )}
-<button
-  onClick={handleSubmit}
-  disabled={!question || options.some((option) => !option) || correctOptions.length === 0}
-  className={`px-4 py-3 rounded mt-4 ${
-    !question || options.some((option) => !option) || correctOptions.length === 0
-      ? 'bg-gray-500 cursor-not-allowed'
-      : 'bg-blue-500 text-white'
-  }`}
->
-  {isEditing ? 'Save' : 'Add Question'}
-</button>
+          <button
+            onClick={handleSubmit}
+            disabled={!question || options.some((option) => !option) || correctOptions.length === 0}
+            className={`px-4 py-3 rounded mt-4 ${
+              !question || options.some((option) => !option) || correctOptions.length === 0
+                ? 'bg-gray-500 cursor-not-allowed'
+                : 'bg-blue-500 text-white'
+            }`}
+          >
+            {isEditing ? 'Save' : 'Add Question'}
+          </button>
         </div>
       )}
     </>

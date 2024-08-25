@@ -14,7 +14,7 @@ const ResponsiveMenuBar = () => {
     const menuItems = [
         { name: 'Home', path: '/' },
         { name: 'Test', path: '/test' },
-        { name: 'Services', path: '/services' },
+        { name: 'Simulate', path: '/simulate' },
         { name: 'Contact', path: '/contact' },
       ];
   return (

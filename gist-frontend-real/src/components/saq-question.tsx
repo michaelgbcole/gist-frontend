@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const SAQ = () => {
+interface SAQProps {
+  id: number;
+  onUpdate: (id: number, question: string, gist: string) => void;
+}
+
+const SAQ: React.FC<SAQProps> = ({ id, onUpdate }) => {
   const [submitted, setSubmitted] = useState(false);
   const [question, setQuestion] = useState('');
   const [gist, setGist] = useState('');
@@ -9,10 +14,19 @@ const SAQ = () => {
   const handleSubmit = () => {
     setSubmitted(true);
     setIsEditing(false);
+    onUpdate(id, question, gist);
   };
 
   const handleEdit = () => {
     setIsEditing(true);
+  };
+
+  const handleQuestionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuestion(e.target.value);
+  };
+
+  const handleGistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setGist(e.target.value);
   };
 
   return (
@@ -39,14 +53,14 @@ const SAQ = () => {
             type="text"
             placeholder="Question"
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={handleQuestionChange}
             className="border border-gray-300 p-2 rounded text-black w-full text-center"
           />
           <input
             type="text"
             placeholder="Gist"
             value={gist}
-            onChange={(e) => setGist(e.target.value)}
+            onChange={handleGistChange}
             className="border border-gray-300 p-2 rounded text-black w-full text-center"
           />
           <button
