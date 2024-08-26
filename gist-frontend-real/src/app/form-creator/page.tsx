@@ -4,9 +4,6 @@ import ResponsiveMenuBar from '@/components/nav-bar';
 import Footer from '@/components/footer';
 import SAQ from '@/components/saq-question-edit';
 import MultipleChoice from '@/components/mc-question-edit';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 interface Question {
   id: number;
