@@ -7,7 +7,7 @@ interface MultipleChoiceProps {
   onUpdate: (id: number, question: string, options: string[], correctOptions: number[]) => void;
 }
 
-const MultipleChoice: React.FC<MultipleChoiceProps> = ({ id, onUpdate }) => {
+const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({ id, onUpdate }) => {
   const [submitted, setSubmitted] = useState(false);
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['', '']);
@@ -126,4 +126,4 @@ const MultipleChoice: React.FC<MultipleChoiceProps> = ({ id, onUpdate }) => {
   );
 };
 
-export default MultipleChoice;
+export default MultipleChoiceEdit;

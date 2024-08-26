@@ -19,38 +19,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Create questions and update form with question IDs
       const questionIds = [];
       for (const q of questionList) {
-        if (q.type === 'SAQ') {
-          const saq = await prisma.sAQ.create({
-            data: {
-              question: q.question || '',
-              gist: q.gist || '',
-            },
-          });
-          questionIds.push(saq.id);
-        } else if (q.type === 'MultipleChoice') {
-          const mc = await prisma.multipleChoice.create({
-            data: {
-              question: q.question || '',
-              options: q.options || [],
-              correctOptions: q.correctOptions || [],
-            },
-          });
-          questionIds.push(mc.id);
-        }
+        const questionData = {
+          type: q.type,
+          question: q.question || '',
+          gist: q.gist || '',
+          options: q.options || [],
+          correctOptions: q.correctOptions || [],
+        };
+
+        const question = await prisma.question.create({
+          data: questionData,
+        });
+
+        questionIds.push(question.id);
       }
 
-      // Update the form with the question IDs
+      // Update form with question IDs
       await prisma.form.update({
         where: { id: form.id },
         data: { questionIds },
       });
 
-      res.status(200).json({ message: 'Publish successful' });
+      res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error publishing:', error);
-      res.status(500).json({ error: 'Error publishing' });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method Not Allowed' });
   }
 }

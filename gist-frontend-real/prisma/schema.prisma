@@ -20,15 +20,12 @@ model Form {
   questionIds Int[]
 }
 
-model SAQ {
-  id          Int       @id @default(autoincrement())
-  question    String
-  gist        String
-}
 
-model MultipleChoice {
-  id          Int       @id @default(autoincrement())
-  question    String
-  options     String[]
+model Question {
+  id            Int       @id @default(autoincrement())
+  type          String
+  question      String
+  gist          String?
+  options       String[]
   correctOptions Int[]
 }

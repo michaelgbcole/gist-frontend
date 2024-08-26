@@ -5,7 +5,7 @@ interface SAQProps {
   onUpdate: (id: number, question: string, gist: string) => void;
 }
 
-const SAQ: React.FC<SAQProps> = ({ id, onUpdate }) => {
+const SAQEdit: React.FC<SAQProps> = ({ id, onUpdate }) => {
   const [submitted, setSubmitted] = useState(false);
   const [question, setQuestion] = useState('');
   const [gist, setGist] = useState('');
@@ -78,4 +78,4 @@ const SAQ: React.FC<SAQProps> = ({ id, onUpdate }) => {
   );
 };
 
-export default SAQ;
+export default SAQEdit;
