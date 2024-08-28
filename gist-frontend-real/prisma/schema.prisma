@@ -18,6 +18,7 @@ model Form {
   id          Int       @id @default(autoincrement())
   title       String
   questionIds Int[]
+  creatorId   Int
 }
 
 
@@ -28,4 +29,32 @@ model Question {
   gist          String?
   options       String[]
   correctOptions Int[]
+}
+
+model School {
+  id        Int      @id @default(autoincrement())
+  name      String
+  location  String
+  administratorId Int
+  teacherIds Int[]
+}
+
+model UserData {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  password  String
+  isTeacher Boolean @default(false)
+  isAdministrator Boolean @default(false)
+  isSuperAdmin Boolean @default(false)
+  schoolId  Int
+  formIds     Int[]
+  teacherIds Int[]
+}
+
+model Submission {
+  id       Int      @id @default(autoincrement())
+  studentId Int
+  formId    Int
+  answerData String[]
 }
