@@ -79,6 +79,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <ResponsiveMenuBar />
       <main className="flex-grow flex items-center justify-center bg-gray-900">
         <div className="w-full">
           <h1 className="text-3xl sm:text-6xl font-bold mb-4 text-center">{title}</h1>
