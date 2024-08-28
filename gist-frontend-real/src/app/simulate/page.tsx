@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [title, setTitle] = useState('');
   const [formId, setFormId] = useState<number | null>(null);
+  const [correctness, setCorrectness] = useState<{ [key: number]: boolean }>({});
 
   async function fetchQuestions(id: number) {
     const response = await fetch('/api/get-form', {
@@ -29,11 +30,9 @@ export default function Home() {
       },
       body: JSON.stringify({ id }),
     });
-
     const data = await response.json();
-    console.log(data.form.title);
-    setTitle(data.form.title);
     setQuestions(data.questions);
+    setTitle(data.title);
   }
 
   const handleSelectionChange = (indices: number[]) => {
@@ -44,8 +43,32 @@ export default function Home() {
     setCurrentAnswer(answer);
   };
 
-  const handleSubmit = () => {
-    console.log('Selected options:', selectedIndices, 'typed answer:', currentAnswer);
+  const handleSubmit = async () => {
+    const newCorrectness: { [key: number]: boolean } = {};
+    for (const question of questions) {
+      const payload = {
+        questionId: question.id,
+        typedAnswer: question.type === 'SAQ' ? currentAnswer : undefined,
+        selectedAnswers: question.type === 'MultipleChoice' ? selectedIndices : undefined,
+      };
+
+      try {
+        const response = await fetch('/api/grade-form', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        newCorrectness[question.id] = result.isCorrect;
+        console.log(`Question ID: ${question.id}, Is Correct: ${result.isCorrect}`);
+      } catch (error) {
+        console.error(`Error grading question ID: ${question.id}`, error);
+      }
+    }
+    setCorrectness(newCorrectness);
   };
 
   const handleFormIdSubmit = () => {
@@ -82,6 +105,11 @@ export default function Home() {
                     <SAQTest id={question.id} onAnswerChange={handleAnswerChange} />
                   ) : (
                     <MultipleChoiceTest id={question.id} onSelectionChange={handleSelectionChange} />
+                  )}
+                  {correctness[question.id] !== undefined && (
+                    <div className={`mt-2 ${correctness[question.id] ? 'text-green-500' : 'text-red-500'}`}>
+                      {correctness[question.id] ? 'Correct' : 'Incorrect'}
+                    </div>
                   )}
                 </div>
               ))}

@@ -51,25 +51,27 @@ export default function Home() {
     };
   
     const handlePublish = async () => {
-        console.log('Publishing...');
-        try {
-          const response = await fetch('/api/publish', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title, questionList }),
-          });
-      
-          if (response.ok) {
-            console.log('Publish successful');
-          } else {
-            console.error('Error publishing:', await response.json());
-          }
-        } catch (error) {
-          console.error('Error publishing:', error);
+      console.log('Publishing...');
+      try {
+        const response = await fetch('/api/publish', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title, questionList }),
+        });
+    
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Publish successful');
+          alert(`Form published successfully! Form ID: ${data.formId}`);
+        } else {
+          console.error('Error publishing:', await response.json());
         }
-      };
+      } catch (error) {
+        console.error('Error publishing:', error);
+      }
+    };
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
       setQuestionList((prevList) =>
         prevList.map((q) =>
