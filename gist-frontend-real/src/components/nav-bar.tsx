@@ -16,6 +16,7 @@ const ResponsiveMenuBar = () => {
         { name: 'Test', path: '/test' },
         { name: 'Simulate', path: '/simulate' },
         { name: 'Contact', path: '/contact' },
+        { name: 'Log In', path: '/login' },
       ];
   return (
     <nav className="bg-gray-800 text-white">
