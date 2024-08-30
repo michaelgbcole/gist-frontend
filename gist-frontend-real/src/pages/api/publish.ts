@@ -1,38 +1,39 @@
+// src/pages/api/publish.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Question } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { title, questionList } = req.body;
+    const { title, questionList, creatorId } = req.body;
+    const uniqueLink = uuidv4(); // Generate a unique identifier
 
     try {
-      // Create the form
+      // Create the form with a unique link
       const form = await prisma.form.create({
         data: {
           title,
+          uniqueLink,
           questionIds: [],
+          creatorId: creatorId || null,
         },
       });
 
-      // Create questions and update form with question IDs
-      const questionIds = [];
-      for (const q of questionList) {
-        const questionData = {
-          type: q.type,
-          question: q.question || '',
-          gist: q.gist || '',
-          options: q.options || [],
-          correctOptions: q.correctOptions || [],
-        };
-
+      // Create questions and collect their IDs
+      const questionIds = await Promise.all(questionList.map(async (q: Question) => {
         const question = await prisma.question.create({
-          data: questionData,
+          data: {
+            type: q.type,
+            question: q.question || '',
+            gist: q.gist || null,
+            options: q.options || [],
+            correctOptions: q.correctOptions || [],
+          },
         });
-
-        questionIds.push(question.id);
-      }
+        return question.id;
+      }));
 
       // Update form with question IDs
       await prisma.form.update({
@@ -40,8 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: { questionIds },
       });
 
-      // Return the form ID
-      res.status(200).json({ success: true, formId: form.id });
+      // Return the form ID and unique link
+      res.status(200).json({ success: true, formId: form.id, uniqueLink });
     } catch (error) {
       console.error('Error publishing:', error);
       res.status(500).json({ error: 'Internal Server Error' });

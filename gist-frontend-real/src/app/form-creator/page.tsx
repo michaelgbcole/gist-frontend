@@ -58,13 +58,17 @@ export default function Home() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ title, questionList }),
+          body: JSON.stringify({ 
+            title, 
+            questionList,
+            creatorId: 1, // Replace with actual creator ID when you have user authentication
+          }),
         });
-    
+  
         if (response.ok) {
           const data = await response.json();
           console.log('Publish successful');
-          alert(`Form published successfully! Form ID: ${data.formId}`);
+          alert(`Form published successfully! Form link: ${window.location.origin}/form/${data.uniqueLink}`);
         } else {
           console.error('Error publishing:', await response.json());
         }
@@ -72,6 +76,7 @@ export default function Home() {
         console.error('Error publishing:', error);
       }
     };
+  
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
       setQuestionList((prevList) =>
         prevList.map((q) =>

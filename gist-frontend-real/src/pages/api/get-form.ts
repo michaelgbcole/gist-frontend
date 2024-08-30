@@ -1,20 +1,22 @@
+// src/pages/api/get-form.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { id } = req.body;
+  if (req.method === 'GET') {
+    const { uniqueLink } = req.query;
 
     try {
-      // Fetch the form data
+      // Fetch the form data using the unique link
       const form = await prisma.form.findUnique({
-        where: { id },
+        where: { uniqueLink: uniqueLink as string },
         select: {
           id: true,
           title: true,
           questionIds: true,
+          creatorId: true,
         },
       });
 

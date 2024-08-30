@@ -19,6 +19,7 @@ model Form {
   title       String
   questionIds Int[]
   creatorId   Int?
+  uniqueLink  String    @unique // Add this line
 }
 
 
@@ -39,19 +40,7 @@ model School {
   teacherIds Int[]
 }
 
-// model UserData {
-//   uId       Int      @default(autoincrement())
-//   id        String  @id
-//   name      String
-//   email     String
-//   password  String
-//   isTeacher Boolean @default(false)
-//   isAdministrator Boolean @default(false)
-//   isSuperAdmin Boolean @default(false)
-//   schoolId  Int
-//   formIds     Int[]
-//   teacherIds Int[]
-// }
+
 
 model UserData {
   id    String @id @default(uuid())
@@ -65,3 +54,4 @@ model Submission {
   formId    Int
   answerData String[]
 }
+
