@@ -24,10 +24,14 @@ export default function Home() {
   };
 
   const handleGoogleLogin = async () => {
+    const redirectTo = process.env.NODE_ENV === 'production'
+      ? 'https://gist-quiz.com/auth/callback'
+      : `${window.location.origin}/auth/callback`;
+  
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     });
     if (error) {
