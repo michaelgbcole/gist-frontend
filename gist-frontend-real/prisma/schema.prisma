@@ -18,8 +18,8 @@ model Form {
   id          Int       @id @default(autoincrement())
   title       String
   questionIds Int[]
-  creatorId   Int?
-  uniqueLink  String    @unique // Add this line
+  creatorId   String    // Change this to String to match the user's UUID
+  uniqueLink  String    @unique
 }
 
 
@@ -46,6 +46,7 @@ model UserData {
   id    String @id @default(uuid())
   email String @unique
   name  String?
+  formIds Int[]
 }
 
 model Submission {

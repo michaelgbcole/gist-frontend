@@ -4,6 +4,11 @@ import ResponsiveMenuBar from '@/components/nav-bar';
 import Footer from '@/components/footer';
 import SAQ from '@/components/saq-question-edit';
 import MultipleChoice from '@/components/mc-question-edit';
+import { useRouter } from 'next/router';
+import { createClientComponentClient, User } from '@supabase/auth-helpers-nextjs';
+import dynamic from 'next/dynamic';
+
+const AuthWrapper = dynamic(() => import('@/components/AuthWrapper'), { ssr: false });
 
 interface Question {
   id: number;
@@ -14,12 +19,13 @@ interface Question {
   correctOptions?: number[];
 }
 
-export default function Home() {
-    const [questionList, setQuestionList] = useState<Question[]>([]);
-    const [showMenu, setShowMenu] = useState(false);
-    const [showDeleteMenu, setShowDeleteMenu] = useState(false);
-    const [title, setTitle] = useState('');
-    const [isEditingTitle, setIsEditingTitle] = useState(true);
+function FormCreatorContent({ user }: { user: User }) {
+  const [questionList, setQuestionList] = useState<Question[]>([]);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [title, setTitle] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(true);
+
   
     const handleButtonClick = (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -51,31 +57,31 @@ export default function Home() {
     };
   
     const handlePublish = async () => {
-      console.log('Publishing...');
       try {
-        const response = await fetch('/api/publish', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            title, 
-            questionList,
-            creatorId: 1, // Replace with actual creator ID when you have user authentication
-          }),
-        });
-  
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Publish successful');
-          alert(`Form published successfully! Form link: ${window.location.origin}/form/${data.uniqueLink}`);
-        } else {
-          console.error('Error publishing:', await response.json());
-        }
+          const response = await fetch('/api/publish', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                  title, 
+                  questionList,
+                  creatorId: user.id,
+              }),
+          });
+
+          if (response.ok) {
+              const data = await response.json();
+              alert(`Form published successfully! Form link: ${window.location.origin}/form/${data.uniqueLink}`);
+              window.location.href = '/dashboard';
+          } else {
+              console.error('Error publishing:', await response.json());
+          }
       } catch (error) {
-        console.error('Error publishing:', error);
+          console.error('Error publishing:', error);
       }
-    };
+  };
+
   
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
       setQuestionList((prevList) =>
@@ -93,25 +99,10 @@ export default function Home() {
       );
     };
   
-    useEffect(() => {
-      const handleClickOutside = () => {
-        setShowMenu(false);
-        setShowDeleteMenu(false);
-      };
-      if (showMenu || showDeleteMenu) {
-        document.addEventListener('click', handleClickOutside);
-      } else {
-        document.removeEventListener('click', handleClickOutside);
-      }
-      return () => {
-        document.removeEventListener('click', handleClickOutside);
-      };
-    }, [showMenu, showDeleteMenu]);
-  
     return (
       <div className="min-h-screen flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <ResponsiveMenuBar />
-        <main className="flex-grow flex items-center justify-center bg-gray-900 p-4 sm:p-12">
+            <ResponsiveMenuBar />
+            <main className="flex-grow flex items-center justify-center bg-gray-900 p-4 sm:p-12">
           <div className="text-center w-full max-w-4xl">
             <div className="flex flex-col items-center justify-center">
               {isEditingTitle ? (
@@ -200,3 +191,11 @@ export default function Home() {
       </div>
     );
   }
+
+  export default function FormCreator() {
+    return (
+        <AuthWrapper>
+            {(user) => user ? <FormCreatorContent user={user} /> : null}
+        </AuthWrapper>
+    );
+}

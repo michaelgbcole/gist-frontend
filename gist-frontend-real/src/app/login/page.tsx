@@ -24,8 +24,10 @@ export default function Home() {
   };
 
   const handleGoogleLogin = async () => {
-    const redirectTo = 'https://gist-quiz.com/auth/callback'
-  
+    console.log('google login')
+    console.log(window.location.origin)
+    const redirectTo = `${window.location.origin}/auth/callback`
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
