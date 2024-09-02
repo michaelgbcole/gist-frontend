@@ -1,6 +1,6 @@
 import Footer from "@/components/footer";
 import ResponsiveMenuBar from "@/components/nav-bar";
-import { Analytics } from "@vercel/analytics/react"
+
 
 
 export default function Home() {
@@ -14,7 +14,6 @@ export default function Home() {
       </div>
     </main>
     <Footer />
-    <Analytics />
   </div>
   );
 }
