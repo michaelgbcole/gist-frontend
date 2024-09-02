@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Footer from '@/components/footer';
+import ResponsiveMenuBar from '@/components/nav-bar';
 
 export default function Home() {
   const supabase = createClientComponentClient();
@@ -16,7 +18,7 @@ export default function Home() {
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-          isSignUp: isSignUp ? 'true' : 'false', // Pass isSignUp as a query parameter
+          isSignUp: isSignUp ? 'true' : 'false',
         },
       },
     });
@@ -27,22 +29,26 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-6 bg-white rounded shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Welcome</h2>
-        <button
-          onClick={() => handleGoogleAuth(false)}
-          className="w-full p-2 mb-4 bg-blue-500 text-white rounded"
-        >
-          Login with Google
-        </button>
-        <button
-          onClick={() => handleGoogleAuth(true)}
-          className="w-full p-2 bg-green-500 text-white rounded"
-        >
-          Sign Up with Google
-        </button>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <ResponsiveMenuBar />
+      <main className="flex-grow flex items-center justify-center bg-gray-900 p-4 sm:p-12">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+          <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">Welcome</h2>
+          <button
+            onClick={() => handleGoogleAuth(false)}
+            className="w-full p-3 mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
+          >
+            Login with Google
+          </button>
+          <button
+            onClick={() => handleGoogleAuth(true)}
+            className="w-full p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
+          >
+            Sign Up with Google
+          </button>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

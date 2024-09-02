@@ -13,11 +13,9 @@ const ResponsiveMenuBar = () => {
   
     const menuItems = [
         { name: 'Home', path: '/' },
-        { name: 'Test', path: '/test' },
-        { name: 'Simulate', path: '/simulate' },
-        { name: 'Contact', path: '/contact' },
-        { name: 'Log In', path: '/login' },
+        { name: 'Log In / Sign Up', path: '/login' },
         { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Contact', path: '/contact' },
       ];
   return (
     <nav className="bg-gray-800 text-white">
@@ -43,13 +41,12 @@ const ResponsiveMenuBar = () => {
                     onClick={toggleDropdown}
                     className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 flex items-center"
                   >
-                    More <ChevronDown className="ml-1 h-4 w-4" />
+                    Admin <ChevronDown className="ml-1 h-4 w-4" />
                   </button>
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dropdown Item 1</a>
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dropdown Item 2</a>
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dropdown Item 3</a>
+                      <a href="/test" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Test</a>
+                      <a href="/simulate" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Simulate</a>
                     </div>
                   )}
                 </div>
