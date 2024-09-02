@@ -81,7 +81,7 @@ export default function Dashboard() {
         ))}
     </ul>
 ) : (
-    <p>You haven't created any forms yet.</p>
+    <p>You havent created any forms yet.</p>
 )}
 <Link legacyBehavior href="/form-creator">
     <a className="mt-4 inline-block p-2 bg-blue-500 text-white rounded">
