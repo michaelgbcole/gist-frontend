@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image'; // Import the Image component
 
 const ResponsiveMenuBar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,18 +13,19 @@ const ResponsiveMenuBar = () => {
     const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
   
     const menuItems = [
-        { name: 'Home', path: '/' },
         { name: 'Log In / Sign Up', path: '/login' },
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Contact', path: '/contact' },
       ];
   return (
-    <nav className="bg-gray-800 text-white">
+    <nav className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <span className="text-xl font-bold">Logo</span>
+              <Link href="/">
+                <Image src="/gist.png" alt="Logo" width={50} height={50} /> {/* Make logo clickable */}
+              </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
