@@ -56,7 +56,31 @@ export default function FormSubmission() {
   };
 
   const handleSubmit = async () => {
-    // Implement submission logic here
+      const newCorrectness: { [key: number]: boolean } = {};
+      for (const question of questions) {
+        const payload = {
+          questionId: question.id,
+          typedAnswer: question.type === 'SAQ' ? currentAnswer : undefined,
+          selectedAnswers: question.type === 'MultipleChoice' ? selectedIndices : undefined,
+        };
+  
+        try {
+          const response = await fetch('/api/grade-form', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+  
+          const result = await response.json();
+          newCorrectness[question.id] = result.isCorrect;
+          console.log(`Question ID: ${question.id}, Is Correct: ${result.isCorrect}`);
+        } catch (error) {
+          console.error(`Error grading question ID: ${question.id}`, error);
+        }
+      }
+      setCorrectness(newCorrectness);
     console.log('Form submitted');
   };
 
