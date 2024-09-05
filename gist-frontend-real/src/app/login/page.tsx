@@ -14,7 +14,7 @@ export default function Home() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo,
+        redirectTo: "balls",
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
