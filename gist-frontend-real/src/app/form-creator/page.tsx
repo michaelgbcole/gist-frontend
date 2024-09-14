@@ -56,9 +56,9 @@ function FormCreatorContent({ user }: { user: User }) {
       setIsEditingTitle(false);
     };
   
-    const handlePublish = async () => {
+    const handlePublishForm = async () => {
       try {
-          const response = await fetch('/api/publish', {
+          const response = await fetch('/api/publish-form', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -82,8 +82,30 @@ function FormCreatorContent({ user }: { user: User }) {
       }
   };
 
+
+    const handleQuestionAdd = async (id: number) => {
+      try {
+        const response = await fetch('/api/add-question', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(questionList[id]),
+        });
+
+        if(response.ok) {
+          console.log('added')
+        } else {
+          console.error('Error adding question')
+        }
+      } catch (error) {
+        console.error('error:', error)
+      }
+      
+    }
   
     const handleSAQUpdate = (id: number, question: string, gist: string) => {
+      handleQuestionAdd(id)
       setQuestionList((prevList) =>
         prevList.map((q) =>
           q.id === id ? { ...q, type: 'SAQ', question, gist } : q
@@ -92,6 +114,7 @@ function FormCreatorContent({ user }: { user: User }) {
     };
   
     const handleMCUpdate = (id: number, question: string, options: string[], correctOptions: number[]) => {
+      handleQuestionAdd(id)
       setQuestionList((prevList) =>
         prevList.map((q) =>
           q.id === id ? { ...q, type: 'MultipleChoice', question, options, correctOptions } : q
@@ -180,7 +203,7 @@ function FormCreatorContent({ user }: { user: User }) {
               </div>
             )}
             <button
-              onClick={handlePublish}
+              onClick={handlePublishForm}
               className="bg-green-500 text-white px-4 py-2 rounded mt-4"
             >
               Publish
