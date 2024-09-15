@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  console.log(requestUrl)
   const code = requestUrl.searchParams.get('code');
   const isSignUp = requestUrl.searchParams.get('isSignUp') === 'true';
   console.log('isSignUp:', isSignUp);
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = createRouteHandlerClient({ cookies });
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    console.log('callback')
+    console.log('callback data', requestUrl.origin, 'isSignup', isSignUp, data)
     if (!error && data?.user) {
       if (isSignUp) {
         // Create user in Prisma database

@@ -9,8 +9,8 @@ export default function Home() {
   const supabase = createClientComponentClient();
 
   const handleGoogleAuth = async (isSignUp: boolean) => {
-    const redirectTo = `${window.location.origin}/auth/v1/callback`;
-    
+    const redirectTo = `${window.location.origin}/auth/v1/callback?isSignUp=${isSignUp}`;
+    console.log(isSignUp)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
