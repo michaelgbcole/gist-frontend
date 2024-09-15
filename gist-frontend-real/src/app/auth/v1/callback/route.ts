@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = createRouteHandlerClient({ cookies });
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
+    console.log('callback')
     if (!error && data?.user) {
       if (isSignUp) {
         // Create user in Prisma database
