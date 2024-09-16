@@ -3,9 +3,12 @@
 import React from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Footer from '@/components/footer';
-import ResponsiveMenuBar from '@/components/nav-bar';
+import NavBar from '@/components/nav-bar';
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { FaGoogle } from 'react-icons/fa';
 
-export default function Home() {
+export default function Component() {
   const supabase = createClientComponentClient();
 
   const handleGoogleAuth = async (isSignUp: boolean) => {
@@ -30,24 +33,37 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <ResponsiveMenuBar />
-      <main className="flex-grow flex items-center justify-center bg-gray-900 p-4 sm:p-12">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-          <h2 className="text-3xl font-bold mb-6 text-center text-gray-900">Welcome</h2>
-          <button
-            onClick={() => handleGoogleAuth(false)}
-            className="w-full p-3 mb-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300"
-          >
-            Login with Google
-          </button>
-          <button
-            onClick={() => handleGoogleAuth(true)}
-            className="w-full p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-300"
-          >
-            Sign Up with Google
-          </button>
-        </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+
+          <NavBar />
+      <main className="flex-grow flex items-center justify-center p-4 sm:p-12">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-3xl font-bold text-center">Welcome</CardTitle>
+            <CardDescription className="text-center text-gray-500">
+              Choose an option to continue
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={() => handleGoogleAuth(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              <FaGoogle className="mr-2 h-4 w-4" /> Login with Google
+            </Button>
+            <Button
+              onClick={() => handleGoogleAuth(true)}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              size="lg"
+            >
+              <FaGoogle className="mr-2 h-4 w-4" /> Sign Up with Google
+            </Button>
+            <div className="text-center text-sm text-gray-500">
+              By continuing, you agree to our Terms of Service and Privacy Policy.
+            </div>
+          </CardContent>
+        </Card>
       </main>
       <Footer />
     </div>
