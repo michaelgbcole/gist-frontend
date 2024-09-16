@@ -1,8 +1,9 @@
+"use client";
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { Link as ScrollLink } from 'react-scroll';
 import { FiMenu, FiX } from 'react-icons/fi';
+import { Link } from 'lucide-react';
 
 export default function NavBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function NavBar() {
 
           <div className="flex justify-center w-full md:w-auto">
             <motion.ul
-              className={`flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 ${isMenuOpen ? 'flex' : 'hidden'} md:flex`}
+              className={`fle x flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 ${isMenuOpen ? 'flex' : 'hidden'} md:flex`}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -36,14 +37,12 @@ export default function NavBar() {
               <li><a href="/login" className="text-gray-300 hover:text-blue-400">Log In</a></li>
               <li><a href="/dashboard" className="text-gray-300 hover:text-blue-400">Dashboard</a></li>
               <li>
-                <ScrollLink
+                <Link
                   to="testimonials"
-                  smooth={true}
-                  duration={500}
                   className="text-gray-300 hover:text-blue-400 cursor-pointer"
                 >
                   Testimonials
-                </ScrollLink>
+                </Link>
               </li>
             </motion.ul>
           </div>

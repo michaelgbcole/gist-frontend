@@ -149,7 +149,7 @@ export default function Dashboard() {
 ))}
                             </div>
                         ) : (
-                            <p className="text-gray-400">You haven't created any forms yet.</p>
+                            <p className="text-gray-400">You have not created any forms yet.</p>
                         )}
                         <div className="mt-6 flex justify-between">
                             <Button asChild>
