@@ -37,12 +37,7 @@ export default function NavBar() {
               <li><a href="/login" className="text-gray-300 hover:text-blue-400">Log In</a></li>
               <li><a href="/dashboard" className="text-gray-300 hover:text-blue-400">Dashboard</a></li>
               <li>
-                <Link
-                  to="testimonials"
-                  className="text-gray-300 hover:text-blue-400 cursor-pointer"
-                >
-                  Testimonials
-                </Link>
+                <a href="#testimonials" className="text-gray-300 hover:text-blue-400">Testimonials</a>
               </li>
             </motion.ul>
           </div>
