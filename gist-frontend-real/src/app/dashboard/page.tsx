@@ -58,7 +58,7 @@ export default function Dashboard() {
     };
 
     if (!user || !prismaUser) {
-        return <div>Loading...</div>;
+        return <div className='flex items-center justify-center h-screen'>Make sure you have created an account!</div>;
     }
 
     return (

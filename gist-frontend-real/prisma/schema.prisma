@@ -47,6 +47,7 @@ model UserData {
   email String @unique
   name  String?
   formIds Int[]
+  isPayer Boolean @default(false)
 }
 
 model Submission {
