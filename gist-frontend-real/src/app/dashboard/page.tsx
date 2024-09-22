@@ -10,15 +10,20 @@ import Footer from '@/components/footer';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, LogOut, Plus } from 'lucide-react';
+import { Copy, CreditCard, DollarSign, LogOut, LucideCreditCard, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 type PrismaUser = {
     id: string;
     email: string;
     name: string | null;
+    isPayer: boolean;
 };
 
+type StripeUser = {
+    stripeId: string;
+    isPayer: boolean;
+}
 type Form = {
     id: number;
     title: string;
@@ -28,6 +33,7 @@ type Form = {
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
+    const [stripeUser, setStripeUser] = useState<StripeUser | null>(null)
     const [forms, setForms] = useState<Form[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -39,7 +45,7 @@ export default function Dashboard() {
             if (user) {
                 setUser(user);
                 // Fetch user data from Prisma
-                const response = await fetch(`/api/user/${user.id}`);
+                const response = await fetch(`/api/user-data/${user.id}`);
                 if (response.ok) {
                     const userData: PrismaUser = await response.json();
                     setPrismaUser(userData);
@@ -111,6 +117,29 @@ export default function Dashboard() {
         );
     }
 
+    if (prismaUser.isPayer === false) {
+        return (
+            <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
+                <ResponsiveMenuBar />
+                <div className="flex-grow flex items-center justify-center">
+                    <Card className='flex flex-col'>
+                        <CardContent className="pt-6">
+                            You need to upgrade to access this page.
+                        </CardContent>
+
+                        <Button asChild className='items-center m-3'>
+                            <Link href="https://buy.stripe.com/test_dR6aHH8CC35T4PSeUU">
+                                <DollarSign className="mr-2 h-4 w-4" /> Upgrade Now
+                            </Link>
+                        </Button>
+
+                    </Card>
+                </div>
+                <Footer />
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
             <ResponsiveMenuBar />
@@ -120,11 +149,12 @@ export default function Dashboard() {
                         <CardTitle>Welcome to your Dashboard</CardTitle>
                         <CardDescription>
                             Email: {prismaUser.email}<br />
-                            Name: {prismaUser.name || 'Not set'}
+                            Name: {prismaUser.name || 'Not set'} <br />
+                            Is Payer: {prismaUser.isPayer ? 'Yes' : 'No'}
                         </CardDescription>
                     </CardHeader>
                 </Card>
-                
+
                 <Card className='bg-black text-white'>
                     <CardHeader>
                         <CardTitle>Your Forms</CardTitle>
@@ -133,20 +163,20 @@ export default function Dashboard() {
                         {forms.length > 0 ? (
                             <div className="space-y-4">
                                 {forms.map((form) => (
-  <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow flex items-center justify-between p-4 bg-gray-800 rounded-lg" key={form.id}>
-    <div className="flex-grow">
-      {form.title}
-    </div>
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-      className='ml-4'
-    >
-      <Copy className="h-4 w-4" />
-    </Button>
-  </Link>
-))}
+                                    <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow flex items-center justify-between p-4 bg-gray-800 rounded-lg" key={form.id}>
+                                        <div className="flex-grow">
+                                            {form.title}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
+                                            className='ml-4'
+                                        >
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                ))}
                             </div>
                         ) : (
                             <p className="text-gray-400">You have not created any forms yet.</p>

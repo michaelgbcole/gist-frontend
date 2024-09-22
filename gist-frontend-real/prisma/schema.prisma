@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,45 +9,41 @@ datasource db {
 }
 
 model Form {
-  id          Int       @id @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   title       String
   questionIds Int[]
-  creatorId   String    // Change this to String to match the user's UUID
-  uniqueLink  String    @unique
+  creatorId   String
+  uniqueLink  String @unique
 }
 
-
 model Question {
-  id            Int       @id @default(autoincrement())
-  type          String
-  question      String
-  gist          String?
-  options       String[]
+  id             Int      @id @default(autoincrement())
+  type           String
+  question       String
+  gist           String?
+  options        String[]
   correctOptions Int[]
 }
 
 model School {
-  id        Int      @id @default(autoincrement())
-  name      String
-  location  String
+  id              Int    @id @default(autoincrement())
+  name            String
+  location        String
   administratorId Int
-  teacherIds Int[]
+  teacherIds      Int[]
 }
 
-
-
 model UserData {
-  id    String @id @default(uuid())
-  email String @unique
-  name  String?
+  id      String  @id @default(uuid())
+  email   String  @unique
+  name    String?
   formIds Int[]
   isPayer Boolean @default(false)
 }
 
 model Submission {
-  id       Int      @id @default(autoincrement())
-  studentId Int
-  formId    Int
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  formId     Int
   answerData String[]
 }
-

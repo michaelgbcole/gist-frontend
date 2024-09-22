@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const user = await prisma.userData.findUnique({
         where: { id: String(id) },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, isPayer: true },
       });
 
       if (user) {
