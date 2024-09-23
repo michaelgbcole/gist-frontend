@@ -12,11 +12,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-    console.log('handling')
   if (req.method === 'POST') {
     try {
       const { user_id } = req.body;
-        console.log('userid', user_id);
+
       // Fetch the user from your database
       const user = await prisma.userData.findUnique({
         where: { id: user_id },
@@ -28,7 +27,27 @@ export default async function handler(
 
       let customerId = user.stripe_customer_id;
 
-      // If the user doesn't have a Stripe customer ID, create one
+      // If the user has a Stripe customer ID, verify it exists in Stripe
+      if (customerId) {
+        try {
+          await stripe.customers.retrieve(customerId);
+        } catch (error) {
+          if (error instanceof Stripe.errors.StripeError) {
+            if (error.code === 'resource_missing') {
+              // Customer doesn't exist in Stripe, so we'll create a new one
+              customerId = null;
+            } else {
+              // For other Stripe errors, we'll throw and let the catch block handle it
+              throw error;
+            }
+          } else {
+            // If it's not a Stripe error, re-throw it
+            throw error;
+          }
+        }
+      }
+
+      // If the user doesn't have a valid Stripe customer ID, create one
       if (!customerId) {
         const customer = await stripe.customers.create({
           email: user.email,
@@ -61,9 +80,15 @@ export default async function handler(
       });
 
       res.status(200).json({ sessionId: session.id });
-    } catch (err) {
-      console.error('Error in create-checkout-session:', err);
-      res.status(500).json({ statusCode: 500, message: err });
+    } catch (error) {
+      console.error('Error in create-checkout-session:', error);
+      if (error instanceof Stripe.errors.StripeError) {
+        res.status(error.statusCode || 500).json({ message: error.message });
+      } else if (error instanceof Error) {
+        res.status(500).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: 'An unknown error occurred' });
+      }
     } finally {
       await prisma.$disconnect();
     }

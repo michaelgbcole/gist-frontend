@@ -61,6 +61,30 @@ export default async function handler(
         return res.status(500).json({ error: 'Error updating user' });
       }
     }
+    if (event.type === 'customer.deleted') {
+        const customer = event.data.object as Stripe.Customer;
+        try {
+          // Find the user with this Stripe customer ID
+          const user = await prisma.userData.findFirst({
+            where: { stripe_customer_id: customer.id },
+          });
+      
+          if (user) {
+            // Update the user to remove the Stripe customer ID and set isPayer to false
+            await prisma.userData.update({
+              where: { id: user.id },
+              data: { 
+                stripe_customer_id: null,
+                isPayer: false
+              },
+            });
+            console.log(`Updated user ${user.id} after Stripe customer deletion`);
+          }
+        } catch (error) {
+          console.error('Error handling customer.deleted event:', error);
+        }
+      }
+      
 
     res.json({ received: true });
   } else {
