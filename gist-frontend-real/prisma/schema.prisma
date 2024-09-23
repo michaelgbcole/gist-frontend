@@ -39,6 +39,7 @@ model UserData {
   name    String?
   formIds Int[]
   isPayer Boolean @default(false)
+  stripe_customer_id String?
 }
 
 model Submission {

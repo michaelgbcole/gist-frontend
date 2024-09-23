@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, CreditCard, DollarSign, LogOut, LucideCreditCard, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { loadStripe } from '@stripe/stripe-js';
 
 type PrismaUser = {
     id: string;
@@ -29,6 +30,9 @@ type Form = {
     title: string;
     uniqueLink: string;
 };
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -65,6 +69,7 @@ export default function Dashboard() {
         getUser();
     }, [supabase, router]);
 
+
     const handleSignOut = async () => {
         await supabase.auth.signOut();
         router.push('/');
@@ -80,6 +85,58 @@ export default function Dashboard() {
             console.error('Could not copy text: ', err);
         });
     };
+
+    const handleUpgrade = async () => {
+        if (!user) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to upgrade.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: user.id,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create checkout session');
+            }
+
+            const { sessionId } = await response.json();
+            const stripe = await stripePromise;
+
+            if (!stripe) {
+                throw new Error('Stripe failed to load');
+            }
+
+            const { error } = await stripe.redirectToCheckout({ sessionId });
+
+            if (error) {
+                toast({
+                    title: "Error",
+                    description: error.message,
+                    variant: "destructive",
+                });
+            }
+        } catch (err) {
+            console.error('Error:', err);
+            toast({
+                title: "Error",
+                description: "An error occurred while processing your request.",
+                variant: "destructive",
+            });
+        }
+    };
+
 
     if (loading) {
         return (
@@ -127,11 +184,9 @@ export default function Dashboard() {
                             You need to upgrade to access this page.
                         </CardContent>
 
-                        <Button asChild className='items-center m-3'>
-                            <Link href="https://buy.stripe.com/test_dR6aHH8CC35T4PSeUU">
-                                <DollarSign className="mr-2 h-4 w-4" /> Upgrade Now
-                            </Link>
-                        </Button>
+                        <Button onClick={handleUpgrade}>
+    <DollarSign className="mr-2 h-4 w-4" /> Upgrade Now
+  </Button>
 
                     </Card>
                 </div>
