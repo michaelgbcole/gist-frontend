@@ -12,10 +12,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+    console.log('handling')
   if (req.method === 'POST') {
     try {
       const { user_id } = req.body;
-
+        console.log('userid', user_id);
       // Fetch the user from your database
       const user = await prisma.userData.findUnique({
         where: { id: user_id },
