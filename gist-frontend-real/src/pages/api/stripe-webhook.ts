@@ -1,7 +1,7 @@
 import { buffer } from 'micro';
 import Stripe from 'stripe';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { PrismaClient } from '@prisma/client';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
@@ -15,10 +15,7 @@ export const config = {
   },
 };
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,
@@ -41,27 +38,27 @@ export default async function handler(
       const session = event.data.object as Stripe.Checkout.Session;
       const customerId = session.customer as string;
 
-      // Fetch the Supabase user ID associated with this Stripe customer
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('stripe_customer_id', customerId)
-        .single();
+      try {
+        // Fetch the user associated with this Stripe customer
+        const user = await prisma.userData.findFirst({
+          where: { stripe_customer_id: customerId },
+        });
 
-      if (userError) {
-        console.error('Error fetching user:', userError);
-        return res.status(400).json({ error: 'Error fetching user' });
-      }
+        if (!user) {
+          console.error('User not found for Stripe customer:', customerId);
+          return res.status(404).json({ error: 'User not found' });
+        }
 
-      // Update the user's isPayer status
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ isPayer: true })
-        .eq('id', userData.id);
+        // Update the user's isPayer status
+        await prisma.userData.update({
+          where: { id: user.id },
+          data: { isPayer: true },
+        });
 
-      if (updateError) {
-        console.error('Error updating user:', updateError);
-        return res.status(400).json({ error: 'Error updating user' });
+        console.log(`Updated isPayer status for user ${user.id}`);
+      } catch (error) {
+        console.error('Error updating user:', error);
+        return res.status(500).json({ error: 'Error updating user' });
       }
     }
 

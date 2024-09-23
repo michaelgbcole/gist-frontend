@@ -1,15 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { PrismaClient } from '@prisma/client';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const prisma = new PrismaClient();
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,14 +17,12 @@ export default async function handler(
       const { user_id } = req.body;
 
       // Fetch the user from your database
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('stripe_customer_id')
-        .eq('id', user_id)
-        .single();
+      const user = await prisma.userData.findUnique({
+        where: { id: user_id },
+      });
 
-      if (userError) {
-        throw new Error('Error fetching user');
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
       }
 
       let customerId = user.stripe_customer_id;
@@ -35,21 +30,18 @@ export default async function handler(
       // If the user doesn't have a Stripe customer ID, create one
       if (!customerId) {
         const customer = await stripe.customers.create({
+          email: user.email,
           metadata: {
-            supabase_id: user_id,
+            prisma_id: user.id,
           },
         });
         customerId = customer.id;
 
         // Update the user with the new Stripe customer ID
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ stripe_customer_id: customerId })
-          .eq('id', user_id);
-
-        if (updateError) {
-          throw new Error('Error updating user with Stripe customer ID');
-        }
+        await prisma.userData.update({
+          where: { id: user.id },
+          data: { stripe_customer_id: customerId },
+        });
       }
 
       // Create Checkout Session
@@ -69,7 +61,10 @@ export default async function handler(
 
       res.status(200).json({ sessionId: session.id });
     } catch (err) {
+      console.error('Error in create-checkout-session:', err);
       res.status(500).json({ statusCode: 500, message: err });
+    } finally {
+      await prisma.$disconnect();
     }
   } else {
     res.setHeader('Allow', 'POST');
