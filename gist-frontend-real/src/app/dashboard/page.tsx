@@ -180,7 +180,7 @@ export default function Dashboard() {
                 <ResponsiveMenuBar />
                 <div className="flex-grow flex items-center justify-center">
                     <Card className='flex flex-col'>
-                        <CardContent className="pt-6">
+                        <CardContent className="pt-6 m-3">
                             You need to upgrade to access this page.
                         </CardContent>
 
