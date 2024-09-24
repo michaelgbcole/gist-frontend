@@ -33,11 +33,10 @@ type Form = {
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-
-export default function Dashboard() {
+function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
-    const [stripeUser, setStripeUser] = useState<StripeUser | null>(null)
+    const [stripeUser, setStripeUser] = useState<StripeUser | null>(null);
     const [forms, setForms] = useState<Form[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -65,10 +64,8 @@ export default function Dashboard() {
             }
             setLoading(false);
         };
-
         getUser();
     }, [supabase, router]);
-
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -95,7 +92,6 @@ export default function Dashboard() {
             });
             return;
         }
-
         try {
             const response = await fetch('/api/create-checkout-session', {
                 method: 'POST',
@@ -106,20 +102,15 @@ export default function Dashboard() {
                     user_id: user.id,
                 }),
             });
-
             if (!response.ok) {
                 throw new Error('Failed to create checkout session');
             }
-
             const { sessionId } = await response.json();
             const stripe = await stripePromise;
-
             if (!stripe) {
                 throw new Error('Stripe failed to load');
             }
-
             const { error } = await stripe.redirectToCheckout({ sessionId });
-
             if (error) {
                 toast({
                     title: "Error",
@@ -136,7 +127,6 @@ export default function Dashboard() {
             });
         }
     };
-
 
     if (loading) {
         return (
@@ -174,30 +164,16 @@ export default function Dashboard() {
         );
     }
 
-    if (prismaUser.isPayer === false) {
-        return (
-            <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
-                <ResponsiveMenuBar />
-                <div className="flex-grow flex items-center justify-center">
-                    <Card className='flex flex-col'>
-                        <CardContent className="pt-6 m-3">
-                            You need to upgrade to access this page.
-                        </CardContent>
-
-                        <Button className='m-3' onClick={handleUpgrade}>
-    <DollarSign className="mr-2 h-4 w-4" /> Upgrade Now
-  </Button>
-
-                    </Card>
-                </div>
-                <Footer />
-            </div>
-        )
-    }
+    const remainingForms = 3 - forms.length;
 
     return (
         <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
             <ResponsiveMenuBar />
+            {!prismaUser.isPayer && (
+                <div className="bg-yellow-500 text-black p-4 text-center">
+                    You are on the trial version of Gist. You have {remainingForms} form{remainingForms===1 ? '' : 's'} left. <button onClick={handleUpgrade} className="underline">Click here to upgrade</button>.
+                </div>
+            )}
             <div className="flex-grow p-8">
                 <Card className="mb-8 bg-black text-white">
                     <CardHeader>
@@ -209,7 +185,6 @@ export default function Dashboard() {
                         </CardDescription>
                     </CardHeader>
                 </Card>
-
                 <Card className='bg-black text-white'>
                     <CardHeader>
                         <CardTitle>Your Forms</CardTitle>
@@ -217,34 +192,35 @@ export default function Dashboard() {
                     <CardContent>
                         {forms.length > 0 ? (
                             <div className="space-y-4">
-                {forms.map((form) => (
-                    <div key={form.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow">
-                            {form.title}
-                        </Link>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-                            className='ml-4'
-                        >
-                            <Copy className="h-4 w-4" />
-                        </Button>
-                    </div>
-                ))}
+                                {forms.map((form) => (
+                                    <div key={form.id} className="flex items-center justify-between bg-gray-800 rounded-lg">
+                                        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow p-6">
+                                            {form.title}
+                                        </Link>
+                                        <Button
+                                            variant="secondary"
+                                            size="icon"
+                                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
+                                            className='m-4'
+                                        >
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
                             </div>
                         ) : (
                             <p className="text-gray-400">You have not created any forms yet.</p>
                         )}
                         <div className="mt-6 flex justify-between">
-                            <Button asChild>
-                                <Link href="/form-creator">
-                                    <Plus className="mr-2 h-4 w-4" /> Create New Form
-                                </Link>
-                            </Button>
-                            <Button variant="destructive" onClick={handleSignOut}>
-                                <LogOut className="mr-2 h-4 w-4" /> Sign Out
-                            </Button>
+                            {prismaUser.isPayer || forms.length < 3 ? (
+                                <Button asChild>
+                                    <Link href="/form-creator">
+                                        <Plus className="mr-2 h-4 w-4" /> Create New Form
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <p className="text-red-500">You have reached the limit of 3 forms. <button onClick={handleUpgrade} className="underline">Upgrade to create more forms</button>.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -253,3 +229,5 @@ export default function Dashboard() {
         </div>
     );
 }
+
+export default Dashboard;
