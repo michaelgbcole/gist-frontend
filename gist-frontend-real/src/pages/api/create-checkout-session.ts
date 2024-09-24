@@ -15,7 +15,7 @@ export default async function handler(
   if (req.method === 'POST') {
     try {
       const { user_id } = req.body;
-
+    console.log(process.env.PRICE_FOR_SUBSCRIPTION)
       // Fetch the user from your database
       const user = await prisma.userData.findUnique({
         where: { id: user_id },
