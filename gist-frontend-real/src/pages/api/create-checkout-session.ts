@@ -70,7 +70,7 @@ export default async function handler(
         payment_method_types: ['card'],
         line_items: [
           {
-            price: 'price_1Q09KuA17edeLBywjWaaQ6w6', // Replace with your actual price ID
+            price: process.env.PRICE_FOR_SUBSCRIPTION, // Replace with your actual price ID
             quantity: 1,
           },
         ],
