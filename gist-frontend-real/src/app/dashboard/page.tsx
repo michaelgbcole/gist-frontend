@@ -184,7 +184,7 @@ export default function Dashboard() {
                             You need to upgrade to access this page.
                         </CardContent>
 
-                        <Button onClick={handleUpgrade}>
+                        <Button className='m-3' onClick={handleUpgrade}>
     <DollarSign className="mr-2 h-4 w-4" /> Upgrade Now
   </Button>
 
@@ -217,21 +217,21 @@ export default function Dashboard() {
                     <CardContent>
                         {forms.length > 0 ? (
                             <div className="space-y-4">
-                                {forms.map((form) => (
-                                    <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow flex items-center justify-between p-4 bg-gray-800 rounded-lg" key={form.id}>
-                                        <div className="flex-grow">
-                                            {form.title}
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-                                            className='ml-4'
-                                        >
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                ))}
+                {forms.map((form) => (
+                    <div key={form.id} className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
+                        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow">
+                            {form.title}
+                        </Link>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
+                            className='ml-4'
+                        >
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
                             </div>
                         ) : (
                             <p className="text-gray-400">You have not created any forms yet.</p>
