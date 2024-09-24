@@ -10,7 +10,7 @@ import Footer from '@/components/footer';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, CreditCard, DollarSign, LogOut, LucideCreditCard, Plus } from 'lucide-react';
+import { Copy, CreditCard, DollarSign, Edit, LogOut, LucideCreditCard, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -197,14 +197,24 @@ function Dashboard() {
                                         <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow p-6">
                                             {form.title}
                                         </Link>
-                                        <Button
-                                            variant="secondary"
-                                            size="icon"
-                                            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-                                            className='m-4'
-                                        >
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex items-center">
+                                            <Button
+                                                variant="secondary"
+                                                size="icon"
+                                                onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
+                                                className='m-2'
+                                            >
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="secondary"
+                                                size="icon"
+                                                onClick={() => router.push(`/form-editor/${form.id}`)}
+                                                className='m-2'
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

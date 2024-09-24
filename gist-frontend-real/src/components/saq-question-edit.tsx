@@ -3,13 +3,26 @@ import React, { useState, useEffect } from 'react';
 interface SAQProps {
   id: number;
   onUpdate: (id: number, question: string, gist: string) => void;
+  initialQuestion?: string;
+  initialGist?: string;
 }
 
-const SAQEdit: React.FC<SAQProps> = ({ id, onUpdate }) => {
+const SAQEdit: React.FC<SAQProps> = ({ 
+  id, 
+  onUpdate, 
+  initialQuestion = '', 
+  initialGist = '' 
+}) => {
   const [submitted, setSubmitted] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [gist, setGist] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
+  const [question, setQuestion] = useState(initialQuestion);
+  const [gist, setGist] = useState(initialGist);
+  const [isEditing, setIsEditing] = useState(!initialQuestion);
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setSubmitted(true);
+    }
+  }, [initialQuestion]);
 
   const handleSubmit = () => {
     setSubmitted(true);

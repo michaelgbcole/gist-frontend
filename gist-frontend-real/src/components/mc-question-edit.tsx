@@ -1,18 +1,33 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface MultipleChoiceProps {
   id: number;
   onUpdate: (id: number, question: string, options: string[], correctOptions: number[]) => void;
+  initialQuestion?: string;
+  initialOptions?: string[];
+  initialCorrectOptions?: number[];
 }
 
-const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({ id, onUpdate }) => {
+const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({ 
+  id, 
+  onUpdate, 
+  initialQuestion = '', 
+  initialOptions = ['', ''], 
+  initialCorrectOptions = [] 
+}) => {
   const [submitted, setSubmitted] = useState(false);
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '']);
-  const [correctOptions, setCorrectOptions] = useState<number[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [question, setQuestion] = useState(initialQuestion);
+  const [options, setOptions] = useState(initialOptions);
+  const [correctOptions, setCorrectOptions] = useState<number[]>(initialCorrectOptions);
+  const [isEditing, setIsEditing] = useState(!initialQuestion);
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setSubmitted(true);
+    }
+  }, [initialQuestion]);
 
   const handleOptionChange = (index: number, value: string) => {
     const newOptions = [...options];
