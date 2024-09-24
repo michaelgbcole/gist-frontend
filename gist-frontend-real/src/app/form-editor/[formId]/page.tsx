@@ -31,6 +31,7 @@ function FormEditorContent({ user }: { user: User }) {
   const [title, setTitle] = useState('')
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
 
   useEffect(() => {
     if (formId && typeof formId === 'string') {
@@ -40,12 +41,13 @@ function FormEditorContent({ user }: { user: User }) {
 
   const fetchFormData = async (id: string) => {
     try {
-      const response = await fetch(`/api/get-form-edit?formId=${id}`)
+      const response = await fetch(`/api/get-form-edit?formId=${id}&userId=${user.id}`)
       if (response.ok) {
         const data = await response.json()
         setTitle(data.title)
         setQuestionList(data.questions)
       } else {
+        setIsError(true)
         console.error('Error fetching form data')
       }
     } catch (error) {
@@ -121,6 +123,16 @@ function FormEditorContent({ user }: { user: User }) {
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
   }
+
+  if(isError) {
+    return <div className="flex justify-center items-center h-screen min-h-screen flex-col bg-gray-900 text-white">
+     <ResponsiveMenuBar />
+     <main className="flex-grow flex flex-col items-center p-4 sm:p-12">
+      Error! Make sure you are logged into the right account.
+      </main>
+            </div>
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">

@@ -8,19 +8,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const { formId } = req.query;
-
-  if (!formId || typeof formId !== 'string') {
-    return res.status(400).json({ message: 'Invalid form ID' });
+  const { formId, userId } = req.query;
+  console.log('userId:', userId);
+  console.log('formId:', formId);
+  if (!formId || typeof formId !== 'string' || !userId || typeof userId !== 'string') {
+    console.log('userId:', userId);
+    console.log('formId:', formId);
+    return res.status(400).json({ message: 'Invalid form ID or user ID' });
   }
 
   try {
+    console.log('userId:', userId);
+    console.log('formId:', formId);
     const form = await prisma.form.findUnique({
       where: { id: parseInt(formId) },
     });
 
-    if (!form) {
-      return res.status(404).json({ message: 'Form not found' });
+    if (!form || form.creatorId !== userId) {
+      return res.status(404).json({ message: 'Form not found or unauthorized' });
     }
 
     const questions = await prisma.question.findMany({
