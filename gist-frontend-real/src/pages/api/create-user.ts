@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { id, email, name } = req.body;
+    const { id, email, name, role } = req.body;
 
     const user = await prisma.userData.create({
       data: {
@@ -17,6 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email,
         name,
         formIds: [],
+        role,
       },
     });
 

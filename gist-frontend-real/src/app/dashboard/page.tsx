@@ -223,11 +223,16 @@ function Dashboard() {
                         )}
                         <div className="mt-6 flex justify-between">
                             {prismaUser.isPayer || forms.length < 3 ? (
+                                <>
                                 <Button asChild>
                                     <Link href="/form-creator">
                                         <Plus className="mr-2 h-4 w-4" /> Create New Form
                                     </Link>
                                 </Button>
+                                <Button onClick={handleSignOut} variant='destructive'>
+                                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                                    </Button>
+</>
                             ) : (
                                 <p className="text-red-500">You have reached the limit of 3 forms. <button onClick={handleUpgrade} className="underline">Upgrade to create more forms</button>.</p>
                             )}

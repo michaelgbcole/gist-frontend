@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   console.log(requestUrl)
   const code = requestUrl.searchParams.get('code');
   const isSignUp = requestUrl.searchParams.get('isSignUp') === 'true';
+  const role = requestUrl.searchParams.get('role');
   console.log('isSignUp:', isSignUp);
   console.log('requesturl.origin:', requestUrl.origin)
   if (code) {
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
               id: data.user.id,
               email: data.user.email,
               name: data.user.user_metadata.full_name,
+              role: role,
             }),
           });
           

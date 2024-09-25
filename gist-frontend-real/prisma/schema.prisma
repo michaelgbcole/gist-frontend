@@ -34,12 +34,13 @@ model School {
 }
 
 model UserData {
-  id      String  @id @default(uuid())
-  email   String  @unique
-  name    String?
-  formIds Int[]
-  isPayer Boolean @default(false)
+  id                 String       @id @default(uuid())
+  email              String       @unique
+  name               String?
+  formIds            Int[]
+  isPayer            Boolean      @default(false)
   stripe_customer_id String?
+  role               String       @default("student")
 }
 
 model Submission {

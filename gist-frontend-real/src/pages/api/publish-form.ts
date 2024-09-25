@@ -1,4 +1,3 @@
-// src/pages/api/publish.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient, Question } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -39,6 +38,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await prisma.form.update({
         where: { id: form.id },
         data: { questionIds },
+      });
+
+      // Add form ID to the user's formIds array
+      await prisma.userData.update({
+        where: { id: creatorId },
+        data: {
+          formIds: {
+            push: form.id,
+          },
+        },
       });
 
       // Return the form ID and unique link

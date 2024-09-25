@@ -57,7 +57,7 @@ function FormEditorContent({ user }: { user: User }) {
     }
   }
 
-  
+
 
   const addQuestion = (type: 'SAQ' | 'MultipleChoice') => {
     setQuestionList([...questionList, { id: Date.now(), type }])
@@ -124,13 +124,13 @@ function FormEditorContent({ user }: { user: User }) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
   }
 
-  if(isError) {
+  if (isError) {
     return <div className="flex justify-center items-center h-screen min-h-screen flex-col bg-gray-900 text-white">
-     <ResponsiveMenuBar />
-     <main className="flex-grow flex flex-col items-center p-4 sm:p-12">
-      Error! Make sure you are logged into the right account.
+      <ResponsiveMenuBar />
+      <main className="flex-grow flex flex-col items-center p-4 sm:p-12">
+        Error! Make sure you are logged into the right account.
       </main>
-            </div>
+    </div>
   }
 
 
@@ -304,10 +304,9 @@ function FormEditorContent({ user }: { user: User }) {
 }
 
 export default function FormEditor() {
-    return (
-      <AuthWrapper>
-        {(user) => user ? <FormEditorContent user={user} /> : null}
-      </AuthWrapper>
-    )
-  }
-  
+  return (
+    <AuthWrapper>
+      {(user) => user ? <FormEditorContent user={user} /> : null}
+    </AuthWrapper>
+  )
+}

@@ -1,13 +1,17 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, AlertTriangle, Send } from 'lucide-react'
 import ResponsiveMenuBar from '@/components/nav-bar'
 import Footer from '@/components/footer'
 import SAQTest from '@/components/saq-question-test'
 import MultipleChoiceTest from '@/components/mc-question-test'
+import { User } from '@supabase/auth-helpers-nextjs'
+import dynamic from 'next/dynamic'
+
+const AuthWrapper = dynamic(() => import('@/components/AuthWrapper'), { ssr: false })
 
 interface Question {
   id: number
@@ -18,8 +22,9 @@ interface Question {
   correctOptions: number[]
 }
 
-export default function FormSubmission() {
+function FormSubmissionContent({ user }: { user: User }) {
   const params = useParams()
+  const router = useRouter()
   const uniqueLink = params?.uniqueLink as string | undefined
 
   const [questions, setQuestions] = useState<Question[]>([])
@@ -195,5 +200,19 @@ export default function FormSubmission() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function FormSubmission() {
+  const router = useRouter()
+
+  return (
+    <AuthWrapper>
+      {(user) => {
+        if (user) {
+          return <FormSubmissionContent user={user} />
+        }
+      }}
+    </AuthWrapper>
   )
 }

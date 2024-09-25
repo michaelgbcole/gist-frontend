@@ -57,7 +57,6 @@ function FormCreatorContent({ user }: { user: User }) {
 
       if (response.ok) {
         const data = await response.json()
-        alert(`Form published successfully! Form link: ${window.location.origin}/form/${data.uniqueLink}`)
         window.location.href = '/dashboard'
       } else {
         console.error('Error publishing:', await response.json())
