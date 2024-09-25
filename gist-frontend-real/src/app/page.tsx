@@ -238,9 +238,11 @@ export default function GistDarkLandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
+                <a href='/login'>
                 <Button size="lg" className="mr-4 bg-blue-400 text-black hover:bg-blue-500">
                   Start Free Trial
                 </Button>
+                </a>
               </motion.div>
             </div>
           </section>
