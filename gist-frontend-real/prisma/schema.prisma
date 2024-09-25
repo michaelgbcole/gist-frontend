@@ -44,8 +44,11 @@ model UserData {
 }
 
 model Submission {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
+  id         Int       @id @default(autoincrement())
+  studentId  String
   formId     Int
-  answerData String[]
+  answers    Json      // Use a JSON field to store an array of answers
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  score     Int
 }

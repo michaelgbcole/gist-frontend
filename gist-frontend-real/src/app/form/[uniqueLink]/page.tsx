@@ -29,11 +29,13 @@ function FormSubmissionContent({ user }: { user: User }) {
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [title, setTitle] = useState('')
-  const [currentAnswer, setCurrentAnswer] = useState('')
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([])
+  const [currentAnswers, setCurrentAnswers] = useState<{ [key: number]: string }>({})
+  const [selectedIndices, setSelectedIndices] = useState<{ [key: number]: number[] }>({})
+  const [percentage, setPercentage] = useState<number | null>(null)
   const [correctness, setCorrectness] = useState<{ [key: number]: boolean }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
   useEffect(() => {
     if (uniqueLink) {
@@ -56,57 +58,87 @@ function FormSubmissionContent({ user }: { user: User }) {
     }
   }
 
-  const handleAnswerChange = (answer: string) => {
-    setCurrentAnswer(answer)
+  const handleAnswerChange = (questionId: number, answer: string) => {
+    setCurrentAnswers(prevAnswers => ({
+      ...prevAnswers,
+      [questionId]: answer
+    }))
   }
 
-  const handleSelectionChange = (indices: number[]) => {
-    setSelectedIndices(indices)
+  const handleSelectionChange = (questionId: number, indices: number[]) => {
+    setSelectedIndices(prevState => ({
+      ...prevState,
+      [questionId]: indices
+    }))
   }
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
-    const newCorrectness: { [key: number]: boolean } = {}
-    for (const question of questions) {
-      const payload = {
-        questionId: question.id,
-        typedAnswer: question.type === 'SAQ' ? currentAnswer : undefined,
-        selectedAnswers: question.type === 'MultipleChoice' ? selectedIndices : undefined,
-      }
+    const payloads = questions.map((question) => ({
+      questionId: question.id,
+      typedAnswer: question.type === 'SAQ' ? currentAnswers[question.id] : undefined,
+      selectedAnswers: question.type === 'MultipleChoice' ? selectedIndices[question.id] : undefined,
+    }))
+    console.log('payloads:', payloads)
 
-      try {
-        const response = await fetch('/api/grade-form', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        })
+    try {
+      const response = await fetch('/api/grade-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ payloads, user, uniqueLink }),
+      })
 
-        const result = await response.json()
-        newCorrectness[question.id] = result.isCorrect
-        console.log(`Question ID: ${question.id}, Is Correct: ${result.isCorrect}`)
-      } catch (error) {
-        console.error(`Error grading question ID: ${question.id}`, error)
-        setError('An error occurred while submitting your answers. Please try again.')
-      }
+      const results = await response.json()
+      const newCorrectness = results.results.reduce((acc: Record<string, boolean>, result: { questionId: string, isCorrect: boolean }) => {
+        acc[result.questionId] = result.isCorrect
+        return acc
+      }, {} as Record<string, boolean>)
+      const percentage = results.score
+      setPercentage(percentage)
+      setCorrectness(newCorrectness)
+      setIsSubmitted(true)
+      console.log('Form submitted')
+    } catch (error) {
+      console.error('Error grading questions', error)
+      setError('An error occurred while submitting your answers. Please try again.')
+    } finally {
+      setIsSubmitting(false)
     }
-    setCorrectness(newCorrectness)
-    setIsSubmitting(false)
-    console.log('Form submitted')
   }
 
-  if (!uniqueLink) {
+  if (isSubmitted && percentage !== null) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <AlertTriangle size={48} className="text-yellow-500 mb-4 mx-auto" />
-          <h1 className="text-2xl font-bold text-center">Error: No unique link provided</h1>
-        </motion.div>
+      <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+        <ResponsiveMenuBar />
+        <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full max-w-3xl text-center"
+          >
+            <h1 className="text-3xl sm:text-5xl font-bold mb-8">{title}</h1>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-4xl sm:text-6xl font-bold mb-4"
+            >
+              Your Score
+            </motion.div>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-6xl sm:text-8xl font-bold text-blue-500"
+            >
+              {percentage}%
+            </motion.div>
+          </motion.div>
+        </main>
+        <Footer />
       </div>
     )
   }
@@ -142,30 +174,16 @@ function FormSubmissionContent({ user }: { user: User }) {
                 className="mb-8 bg-gray-800 rounded-lg p-6 shadow-lg"
               >
                 {question.type === 'SAQ' ? (
-                  <SAQTest id={question.id} onAnswerChange={handleAnswerChange} />
+                  <SAQTest 
+                    id={question.id} 
+                    onAnswerChange={(answer) => handleAnswerChange(question.id, answer)} 
+                  />
                 ) : (
-                  <MultipleChoiceTest id={question.id} onSelectionChange={handleSelectionChange} />
+                  <MultipleChoiceTest 
+                    id={question.id} 
+                    onSelectionChange={(indices) => handleSelectionChange(question.id, indices)} 
+                  />
                 )}
-                <AnimatePresence>
-                  {correctness[question.id] !== undefined && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.3 }}
-                      className={`mt-4 flex items-center ${
-                        correctness[question.id] ? 'text-green-500' : 'text-red-500'
-                      }`}
-                    >
-                      {correctness[question.id] ? (
-                        <Check className="mr-2" />
-                      ) : (
-                        <X className="mr-2" />
-                      )}
-                      {correctness[question.id] ? 'Correct' : 'Incorrect'}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </motion.div>
             ))}
           </AnimatePresence>

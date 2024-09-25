@@ -26,7 +26,6 @@ const SAQTest: React.FC<SAQTestProps> = ({ id, onAnswerChange }) => {
           const data = await response.json();
           console.log(data.question.question);
           setQuestion(data.question.question);
-          setAnswer(JSON.stringify(data));
         } else {
           console.error('Error fetching data:', await response.json());
         }
@@ -38,9 +37,11 @@ const SAQTest: React.FC<SAQTestProps> = ({ id, onAnswerChange }) => {
     fetchData();
   }, [id]);
 
-  useEffect(() => {
-    onAnswerChange(answer);
-  }, [answer, onAnswerChange]);
+  const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newAnswer = e.target.value;
+    setAnswer(newAnswer);
+    onAnswerChange(newAnswer);
+  };
 
   return (
     <>
@@ -53,7 +54,8 @@ const SAQTest: React.FC<SAQTestProps> = ({ id, onAnswerChange }) => {
         <textarea
           className="text-white border border-gray-300 p-2 rounded mx-4 w-full h-32 bg-transparent"
           style={{ textAlign: 'left', verticalAlign: 'top' }}
-          onChange={(e) => setAnswer(e.target.value)}
+          onChange={handleAnswerChange}
+          value={answer}
         />
       </div>
     </>
