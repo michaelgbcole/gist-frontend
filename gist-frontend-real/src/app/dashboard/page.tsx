@@ -10,9 +10,11 @@ import Footer from '@/components/footer';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, CreditCard, DollarSign, Edit, Eye, LogOut, LucideCreditCard, Plus } from 'lucide-react';
+import { Copy, CreditCard, DollarSign, Edit, Eye, LogOut, LucideCreditCard, Plus, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { loadStripe } from '@stripe/stripe-js';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type PrismaUser = {
     id: string;
@@ -34,6 +36,7 @@ type Form = {
 type Submission = {
     id: number;
     studentId: string;
+    studentName?: string;
     score: number;
     createdAt: string;
   };
@@ -50,6 +53,7 @@ function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
     const [submissionsData, setSubmissionsData] = useState<{ [formId: number]: SubmissionData }>({});
+    const [selectedForm, setSelectedForm] = useState<Form | null>(null);
     const [expandedForms, setExpandedForms] = useState<Set<number>>(new Set());
     const [forms, setForms] = useState<Form[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,23 +85,51 @@ function Dashboard() {
         getUser();
     }, [supabase, router]);
 
+    const openFormDialog = (form: Form) => {
+        setSelectedForm(form);
+        if (!submissionsData[form.id]) {
+            fetchSubmissions(form.id);
+        }
+    };
+
+    const closeFormDialog = () => {
+        setSelectedForm(null);
+    };
+
     const fetchSubmissions = async (formId: number) => {
         try {
-          const response = await fetch(`/api/submissions/${formId}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch submissions');
-          }
-          const data: SubmissionData = await response.json();
-          setSubmissionsData(prev => ({ ...prev, [formId]: data }));
+            const response = await fetch(`/api/submissions/${formId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch submissions');
+            }
+            const data: SubmissionData = await response.json();
+    
+            // Fetch user data for each submission
+            const userPromises = data.submissions.map(sub =>
+                fetch(`/api/user-data/${sub.studentId}`).then(res => res.json())
+            );
+    
+            const users = await Promise.all(userPromises);
+    
+            // Map user data to submissions
+            const submissionsWithUserNames = data.submissions.map((sub, index) => ({
+                ...sub,
+                studentName: users[index].name,
+            }));
+    
+            setSubmissionsData(prev => ({
+                ...prev,
+                [formId]: { ...data, submissions: submissionsWithUserNames },
+            }));
         } catch (error) {
-          console.error('Error fetching submissions:', error);
-          toast({
-            title: "Error",
-            description: "Failed to fetch submissions.",
-            variant: "destructive",
-          });
+            console.error('Error fetching submissions:', error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch submissions.",
+                variant: "destructive",
+            });
         }
-      };
+    };
     
       const toggleSubmissions = (formId: number) => {
         if (expandedForms.has(formId)) {
@@ -120,7 +152,7 @@ function Dashboard() {
               <ul className="mt-2">
                 {data.submissions.slice(0, 5).map(sub => (
                   <li key={sub.id} className="text-sm">
-                    Student ID: {sub.studentId} - Score: {sub.score}
+                    Name: {sub.studentId} - Score: {sub.score}
                   </li>
                 ))}
               </ul>
@@ -252,77 +284,100 @@ function Dashboard() {
                         <CardDescription>
                             Email: {prismaUser.email}<br />
                             Name: {prismaUser.name || 'Not set'} <br />
-                            Is Payer: {prismaUser.isPayer ? 'Yes' : 'No'}
                         </CardDescription>
                     </CardHeader>
                 </Card>
-                <Card className='bg-black text-white'>
-                    <CardHeader>
-                        <CardTitle>Your Forms</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {forms.length > 0 ? (
-                            <div className="space-y-4">
-                                {forms.map((form) => (
-    <div key={form.id} className="flex flex-col bg-gray-800 rounded-lg">
-      <div className="flex items-center justify-between p-6">
-        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow">
-          {form.title}
-        </Link>
-        <div className="flex items-center">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-            className='m-2'
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => router.push(`/form-editor/${form.id}`)}
-            className='m-2'
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => toggleSubmissions(form.id)}
-            className='m-2'
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-      {expandedForms.has(form.id) && renderSubmissions(form.id)}
-    </div>
-  ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-400">You have not created any forms yet.</p>
-                        )}
-                        <div className="mt-6 flex justify-between">
-                            {prismaUser.isPayer || forms.length < 3 ? (
-                                <>
-                                    <Button asChild>
-                                        <Link href="/form-creator">
-                                            <Plus className="mr-2 h-4 w-4" /> Create New Form
-                                        </Link>
-                                    </Button>
-                                    <Button onClick={handleSignOut} variant='destructive'>
-                                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
-                                    </Button>
-                                </>
-                            ) : (
-                                <p className="text-red-500">You have reached the limit of 3 forms. <button onClick={handleUpgrade} className="underline">Upgrade to create more forms</button>.</p>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {forms.map((form) => (
+                        <Card key={form.id} className="bg-black text-white cursor-pointer hover:bg-gray-800 transition-colors" onClick={() => openFormDialog(form)}>
+                            <CardContent className="p-6 flex items-center justify-center h-40">
+                                <h3 className="text-xl font-semibold text-center">{form.title}</h3>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+                <div className="mt-6 flex justify-between">
+                    {prismaUser.isPayer || forms.length < 3 ? (
+                        <>
+                            <Button asChild variant='secondary'>
+                                <Link href="/form-creator">
+                                    <Plus className="mr-2 h-4 w-4" /> Create New Form
+                                </Link>
+                            </Button>
+                            <Button onClick={handleSignOut} variant='destructive'>
+                                <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                            </Button>
+                        </>
+                    ) : (
+                        <p className="text-red-500">You have reached the limit of 3 forms. <button onClick={handleUpgrade} className="underline">Upgrade to create more forms</button>.</p>
+                    )}
+                </div>
             </div>
             <Footer />
+
+            <Dialog open={!!selectedForm} onOpenChange={closeFormDialog}>
+                {selectedForm && (
+                    <DialogContent className="bg-black text-white">
+                        <DialogHeader>
+                            <DialogTitle className="flex justify-between items-center">
+                                <span>{selectedForm.title}</span>
+                                <Button variant="ghost" size="icon" onClick={closeFormDialog}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="mt-4">
+                            <Button 
+                                variant="secondary" 
+                                onClick={() => copyToClipboard(`${window.location.origin}/form/${selectedForm.uniqueLink}`)}
+                                className="mr-2"
+                            >
+                                <Copy className="mr-2 h-4 w-4" /> Share Link
+                            </Button>
+                            <Button 
+                                variant="secondary" 
+                                onClick={() => router.push(`/form-editor/${selectedForm.id}`)}
+                                className="mr-2"
+                            >
+                                <Edit className="mr-2 h-4 w-4" /> Edit Form
+                            </Button>
+                        </div>
+                        <DialogDescription className="mt-4">
+                            {submissionsData[selectedForm.id] ? (
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-2">Submission Data</h4>
+                                    <p>Average Score: {submissionsData[selectedForm.id].averageScore.toFixed(2)}</p>
+                                    <Table className="mt-4">
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="text-white">Name</TableHead>
+                                                <TableHead className="text-white">Score</TableHead>
+                                                <TableHead className="text-white">Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {submissionsData[selectedForm.id].submissions.slice(0, 5).map(sub => (
+                                                <TableRow key={sub.id}>
+                                                    <TableCell className="border-t border-gray-700">{sub.studentName}</TableCell>
+                                                    <TableCell className="border-t border-gray-700">{sub.score}%</TableCell>
+                                                    <TableCell className="border-t border-gray-700">{new Date(sub.createdAt).toLocaleDateString()}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                    {submissionsData[selectedForm.id].submissions.length > 5 && (
+                                        <Button variant="link" onClick={() => {/* Implement view all logic */}} className="mt-2">
+                                            View All
+                                        </Button>
+                                    )}
+                                </div>
+                            ) : (
+                                <p>Loading submission data...</p>
+                            )}
+                        </DialogDescription>
+                    </DialogContent>
+                )}
+            </Dialog>
         </div>
     );
 }
