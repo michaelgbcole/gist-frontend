@@ -10,7 +10,7 @@ import Footer from '@/components/footer';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, CreditCard, DollarSign, Edit, LogOut, LucideCreditCard, Plus } from 'lucide-react';
+import { Copy, CreditCard, DollarSign, Edit, Eye, LogOut, LucideCreditCard, Plus } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -31,12 +31,26 @@ type Form = {
     uniqueLink: string;
 };
 
+type Submission = {
+    id: number;
+    studentId: string;
+    score: number;
+    createdAt: string;
+  };
+  
+  type SubmissionData = {
+    submissions: Submission[];
+    averageScore: number;
+  };
+  
+
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
-    const [stripeUser, setStripeUser] = useState<StripeUser | null>(null);
+    const [submissionsData, setSubmissionsData] = useState<{ [formId: number]: SubmissionData }>({});
+    const [expandedForms, setExpandedForms] = useState<Set<number>>(new Set());
     const [forms, setForms] = useState<Form[]>([]);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
@@ -66,6 +80,63 @@ function Dashboard() {
         };
         getUser();
     }, [supabase, router]);
+
+    const fetchSubmissions = async (formId: number) => {
+        try {
+          const response = await fetch(`/api/submissions/${formId}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch submissions');
+          }
+          const data: SubmissionData = await response.json();
+          setSubmissionsData(prev => ({ ...prev, [formId]: data }));
+        } catch (error) {
+          console.error('Error fetching submissions:', error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch submissions.",
+            variant: "destructive",
+          });
+        }
+      };
+    
+      const toggleSubmissions = (formId: number) => {
+        if (expandedForms.has(formId)) {
+          expandedForms.delete(formId);
+        } else {
+          expandedForms.add(formId);
+          if (!submissionsData[formId]) {
+            fetchSubmissions(formId);
+          }
+        }
+        setExpandedForms(new Set(expandedForms));
+      };
+    
+      const renderSubmissions = (formId: number) => {
+        const data = submissionsData[formId];
+        if (!data) return <p>Loading submissions...</p>;
+        return (
+            <div className="mt-4">
+              <p>Average Score: {data.averageScore.toFixed(2)}</p>
+              <ul className="mt-2">
+                {data.submissions.slice(0, 5).map(sub => (
+                  <li key={sub.id} className="text-sm">
+                    Student ID: {sub.studentId} - Score: {sub.score}
+                  </li>
+                ))}
+              </ul>
+              {data.submissions.length > 5 && (
+                <Button
+                  variant="link"
+                  onClick={() => {/* Implement view all logic */}}
+                  className="mt-2"
+                >
+                  View All
+                </Button>
+              )}
+            </div>
+          );
+        };
+    
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -171,7 +242,7 @@ function Dashboard() {
             <ResponsiveMenuBar />
             {!prismaUser.isPayer && (
                 <div className="bg-yellow-500 text-black p-4 text-center">
-                    You are on the trial version of Gist. You have {remainingForms} form{remainingForms===1 ? '' : 's'} left. <button onClick={handleUpgrade} className="underline">Click here to upgrade</button>.
+                    You are on the trial version of Gist. You have {remainingForms} form{remainingForms === 1 ? '' : 's'} left. <button onClick={handleUpgrade} className="underline">Click here to upgrade</button>.
                 </div>
             )}
             <div className="flex-grow p-8">
@@ -193,30 +264,41 @@ function Dashboard() {
                         {forms.length > 0 ? (
                             <div className="space-y-4">
                                 {forms.map((form) => (
-                                    <div key={form.id} className="flex items-center justify-between bg-gray-800 rounded-lg">
-                                        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow p-6">
-                                            {form.title}
-                                        </Link>
-                                        <div className="flex items-center">
-                                            <Button
-                                                variant="secondary"
-                                                size="icon"
-                                                onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
-                                                className='m-2'
-                                            >
-                                                <Copy className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="secondary"
-                                                size="icon"
-                                                onClick={() => router.push(`/form-editor/${form.id}`)}
-                                                className='m-2'
-                                            >
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
+    <div key={form.id} className="flex flex-col bg-gray-800 rounded-lg">
+      <div className="flex items-center justify-between p-6">
+        <Link href={`/form/${form.uniqueLink}`} className="text-blue-400 hover:text-blue-300 flex-grow">
+          {form.title}
+        </Link>
+        <div className="flex items-center">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => copyToClipboard(`${window.location.origin}/form/${form.uniqueLink}`)}
+            className='m-2'
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => router.push(`/form-editor/${form.id}`)}
+            className='m-2'
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => toggleSubmissions(form.id)}
+            className='m-2'
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      {expandedForms.has(form.id) && renderSubmissions(form.id)}
+    </div>
+  ))}
                             </div>
                         ) : (
                             <p className="text-gray-400">You have not created any forms yet.</p>
@@ -224,15 +306,15 @@ function Dashboard() {
                         <div className="mt-6 flex justify-between">
                             {prismaUser.isPayer || forms.length < 3 ? (
                                 <>
-                                <Button asChild>
-                                    <Link href="/form-creator">
-                                        <Plus className="mr-2 h-4 w-4" /> Create New Form
-                                    </Link>
-                                </Button>
-                                <Button onClick={handleSignOut} variant='destructive'>
-                                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                                    <Button asChild>
+                                        <Link href="/form-creator">
+                                            <Plus className="mr-2 h-4 w-4" /> Create New Form
+                                        </Link>
                                     </Button>
-</>
+                                    <Button onClick={handleSignOut} variant='destructive'>
+                                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                                    </Button>
+                                </>
                             ) : (
                                 <p className="text-red-500">You have reached the limit of 3 forms. <button onClick={handleUpgrade} className="underline">Upgrade to create more forms</button>.</p>
                             )}
