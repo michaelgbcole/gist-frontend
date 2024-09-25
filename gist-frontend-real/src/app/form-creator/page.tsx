@@ -27,6 +27,7 @@ function FormCreatorContent({ user }: { user: User }) {
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [title, setTitle] = useState('')
   const [isEditingTitle, setIsEditingTitle] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const addQuestion = (type: 'SAQ' | 'MultipleChoice') => {
     setQuestionList([...questionList, { id: questionList.length, type }])
@@ -59,6 +60,7 @@ function FormCreatorContent({ user }: { user: User }) {
         const data = await response.json()
         window.location.href = '/dashboard'
       } else {
+        setErrorMessage('Failed to publish the form. Make sure you are not exceeding the limit!')
         console.error('Error publishing:', await response.json())
       }
     } catch (error) {
@@ -271,7 +273,8 @@ function FormCreatorContent({ user }: { user: User }) {
               className="bg-gray-800 p-6 rounded-lg max-w-md w-full"
             >
               <h2 className="text-2xl font-bold mb-4">Publish Form</h2>
-              <p className="mb-4">Are you sure you want to publish this form? Once published, it cannot be edited.</p>
+              <p className="mb-4">Are you sure you want to publish this form?</p>
+              <p className='text-red-600 mb-4'>{errorMessage}</p>
               <div className="flex justify-end space-x-4">
                 <motion.button
                   whileHover={{ scale: 1.05 }}

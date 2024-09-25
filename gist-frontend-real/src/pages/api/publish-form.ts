@@ -10,6 +10,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const uniqueLink = uuidv4(); // Generate a unique identifier
 
     try {
+      // Fetch user data
+      const user = await prisma.userData.findUnique({
+        where: { id: creatorId },
+        select: { isPayer: true, formIds: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Check if the user is a payer or has less than 3 forms
+      if (!user.isPayer && user.formIds.length >= 3) {
+        return res.status(403).json({ error: 'User has reached the limit of 3 forms' });
+      }
+
       // Create the form with a unique link
       const form = await prisma.form.create({
         data: {
@@ -40,21 +55,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: { questionIds },
       });
 
-      // Add form ID to the user's formIds array
-      await prisma.userData.update({
-        where: { id: creatorId },
-        data: {
-          formIds: {
-            push: form.id,
-          },
-        },
-      });
-
       // Return the form ID and unique link
       res.status(200).json({ success: true, formId: form.id, uniqueLink });
     } catch (error) {
       console.error('Error publishing:', error);
       res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+      await prisma.$disconnect();
     }
   } else {
     res.status(405).json({ error: 'Method Not Allowed' });
