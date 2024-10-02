@@ -55,7 +55,9 @@ function Dashboard() {
     const [submissionsData, setSubmissionsData] = useState<{ [formId: number]: SubmissionData }>({});
     const [selectedForm, setSelectedForm] = useState<Form | null>(null);
     const [expandedForms, setExpandedForms] = useState<Set<number>>(new Set());
+    const [showAll, setShowAll] = useState(false);
     const [forms, setForms] = useState<Form[]>([]);
+    const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const supabase = createClientComponentClient();
@@ -103,20 +105,20 @@ function Dashboard() {
                 throw new Error('Failed to fetch submissions');
             }
             const data: SubmissionData = await response.json();
-    
+
             // Fetch user data for each submission
             const userPromises = data.submissions.map(sub =>
                 fetch(`/api/user-data/${sub.studentId}`).then(res => res.json())
             );
-    
+
             const users = await Promise.all(userPromises);
-    
+
             // Map user data to submissions
             const submissionsWithUserNames = data.submissions.map((sub, index) => ({
                 ...sub,
                 studentName: users[index].name,
             }));
-    
+
             setSubmissionsData(prev => ({
                 ...prev,
                 [formId]: { ...data, submissions: submissionsWithUserNames },
@@ -130,45 +132,108 @@ function Dashboard() {
             });
         }
     };
-    
-      const toggleSubmissions = (formId: number) => {
-        if (expandedForms.has(formId)) {
-          expandedForms.delete(formId);
-        } else {
-          expandedForms.add(formId);
-          if (!submissionsData[formId]) {
-            fetchSubmissions(formId);
-          }
-        }
-        setExpandedForms(new Set(expandedForms));
-      };
-    
-      const renderSubmissions = (formId: number) => {
-        const data = submissionsData[formId];
-        if (!data) return <p>Loading submissions...</p>;
-        return (
-            <div className="mt-4">
-              <p>Average Score: {data.averageScore.toFixed(2)}</p>
-              <ul className="mt-2">
-                {data.submissions.slice(0, 5).map(sub => (
-                  <li key={sub.id} className="text-sm">
-                    Name: {sub.studentId} - Score: {sub.score}
-                  </li>
-                ))}
-              </ul>
-              {data.submissions.length > 5 && (
-                <Button
-                  variant="link"
-                  onClick={() => {/* Implement view all logic */}}
-                  className="mt-2"
-                >
-                  View All
-                </Button>
-              )}
-            </div>
-          );
-        };
-    
+
+      // ... (previous code remains the same)
+
+const renderSubmissions = (formId: number) => {
+  const data = submissionsData[formId];
+  if (!data) return <p>Loading submissions...</p>;
+
+  
+
+  return (
+    <div className="mt-4">
+      <p>Average Score: {data.averageScore.toFixed(2)}</p>
+      <Table className="mt-4">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-white">Name</TableHead>
+            <TableHead className="text-white">Score</TableHead>
+            <TableHead className="text-white">Date</TableHead>
+            <TableHead className='text-white'>View Submission</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.submissions.slice(0, showAll ? data.submissions.length : 5).map(sub => (
+            <TableRow key={sub.id}>
+              <TableCell className="border-t border-gray-700">{sub.studentName}</TableCell>
+              <TableCell className="border-t border-gray-700">{sub.score}%</TableCell>
+              <TableCell className="border-t border-gray-700">{new Date(sub.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="border-t border-gray-700">
+                    <Link href={`/submission/${sub.id}`}>
+                    <Button variant="secondary" size="icon">
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    </Link>
+                    </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {!showAll && data.submissions.length > 5 && (
+        <Button variant="secondary" onClick={() => setShowAll(true)} className="mt-2">
+          Show All
+        </Button>
+      )}
+    </div>
+  );
+};
+
+// ... (rest of the code remains the same)
+
+
+interface ViewAllSubmissionsModalProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    submissions: Submission[];
+  }
+  
+
+const ViewAllSubmissionsModal: React.FC<ViewAllSubmissionsModalProps> = ({
+    open,
+    onOpenChange,
+    submissions,
+  }) => {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="bg-black text-white">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-white">Name</TableHead>
+                <TableHead className="text-white">Score</TableHead>
+                <TableHead className="text-white">Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {submissions.map((sub) => (
+                <TableRow key={sub.id}>
+                  <TableCell className="border-t border-gray-700">
+                    {sub.studentName}
+                  </TableCell>
+                  <TableCell className="border-t border-gray-700">
+                    {sub.score}%
+                  </TableCell>
+                  <TableCell className="border-t border-gray-700">
+                    {new Date(sub.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="border-t border-gray-700">
+                  <Link href={`/submission/${sub.id}`}>
+                    <Button variant="secondary" size="icon">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                </Link>
+                    </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+  
+
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
@@ -327,59 +392,41 @@ function Dashboard() {
                             </DialogTitle>
                         </DialogHeader>
                         <div className="mt-4">
-                            <Button 
-                                variant="secondary" 
+                            <Button
+                                variant="secondary"
                                 onClick={() => copyToClipboard(`${window.location.origin}/form/${selectedForm.uniqueLink}`)}
                                 className="mr-2"
                             >
                                 <Copy className="mr-2 h-4 w-4" /> Share Link
                             </Button>
-                            <Button 
-                                variant="secondary" 
+                            <Button
+                                variant="secondary"
                                 onClick={() => router.push(`/form-editor/${selectedForm.id}`)}
                                 className="mr-2"
                             >
                                 <Edit className="mr-2 h-4 w-4" /> Edit Form
                             </Button>
                         </div>
-                        <DialogDescription className="mt-4">
-                            {submissionsData[selectedForm.id] ? (
-                                <div>
-                                    <h4 className="text-lg font-semibold mb-2">Submission Data</h4>
-                                    <p>Average Score: {submissionsData[selectedForm.id].averageScore.toFixed(2)}</p>
-                                    <Table className="mt-4">
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead className="text-white">Name</TableHead>
-                                                <TableHead className="text-white">Score</TableHead>
-                                                <TableHead className="text-white">Date</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {submissionsData[selectedForm.id].submissions.slice(0, 5).map(sub => (
-                                                <TableRow key={sub.id}>
-                                                    <TableCell className="border-t border-gray-700">{sub.studentName}</TableCell>
-                                                    <TableCell className="border-t border-gray-700">{sub.score}%</TableCell>
-                                                    <TableCell className="border-t border-gray-700">{new Date(sub.createdAt).toLocaleDateString()}</TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                    {submissionsData[selectedForm.id].submissions.length > 5 && (
-                                        <Button variant="link" onClick={() => {/* Implement view all logic */}} className="mt-2">
-                                            View All
-                                        </Button>
-                                    )}
-                                </div>
-                            ) : (
-                                <p>Loading submission data...</p>
-                            )}
-                        </DialogDescription>
+                       <DialogDescription className="mt-4">
+  {submissionsData[selectedForm.id] ? (
+    <div>
+      <h4 className="text-lg font-semibold mb-2">Submission Data</h4>
+      <p>Average Score: {submissionsData[selectedForm.id].averageScore.toFixed(2)}</p>
+      {renderSubmissions(selectedForm.id)}
+      {submissionsData[selectedForm.id].submissions.length > 5}
+    </div>
+  ) : (
+    <p>Loading submission data...</p>
+  )}
+</DialogDescription>
+
                     </DialogContent>
                 )}
             </Dialog>
         </div>
     );
 }
+
+    // ... (rest of the code remains the same)
 
 export default Dashboard;
