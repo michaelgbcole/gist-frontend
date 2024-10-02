@@ -39,13 +39,13 @@ type Submission = {
     studentName?: string;
     score: number;
     createdAt: string;
-  };
-  
-  type SubmissionData = {
+};
+
+type SubmissionData = {
     submissions: Submission[];
     averageScore: number;
-  };
-  
+};
+
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -98,141 +98,104 @@ function Dashboard() {
         setSelectedForm(null);
     };
 
-    const fetchSubmissions = async (formId: number) => {
-        try {
-            const response = await fetch(`/api/submissions/${formId}`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch submissions');
-            }
-            const data: SubmissionData = await response.json();
+const fetchSubmissions = async (formId: number) => {
+    try {
+        const response = await fetch(`/api/submissions/${formId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch submissions');
+        }
+        const data: SubmissionData = await response.json();
 
-            // Fetch user data for each submission
-            const userPromises = data.submissions.map(sub =>
-                fetch(`/api/user-data/${sub.studentId}`).then(res => res.json())
-            );
+        // Fetch user data for each submission
+        const userPromises = data.submissions.map(sub =>
+            fetch(`/api/user-data/${sub.studentId}`).then(res => res.json())
+        );
 
-            const users = await Promise.all(userPromises);
+        const users = await Promise.all(userPromises);
 
-            // Map user data to submissions
-            const submissionsWithUserNames = data.submissions.map((sub, index) => ({
-                ...sub,
-                studentName: users[index].name,
-            }));
+        // Map user data to submissions
+        const submissionsWithUserNames = data.submissions.map((sub, index) => ({
+            ...sub,
+            studentName: users[index].name,
+        }));
 
-            setSubmissionsData(prev => ({
-                ...prev,
-                [formId]: { ...data, submissions: submissionsWithUserNames },
-            }));
-        } catch (error) {
-            console.error('Error fetching submissions:', error);
-            toast({
-                title: "Error",
-                description: "Failed to fetch submissions.",
+        setSubmissionsData(prev => ({
+            ...prev,
+            [formId]: { ...data, submissions: submissionsWithUserNames },
+        }));
+    } catch (error) {
+        console.error('Error fetching submissions:', error);
+        toast({
+            title: "Error",
+            description: "Failed to fetch submissions.",
                 variant: "destructive",
             });
         }
     };
 
-      // ... (previous code remains the same)
+   const renderSubmissions = (formId: number) => {
+    const data = submissionsData[formId];
 
-const renderSubmissions = (formId: number) => {
-  const data = submissionsData[formId];
-  if (!data) return <p>Loading submissions...</p>;
+    if (!data) {
+        return <p>Loading submissions...</p>;
+    }
 
-  
-
-  return (
-    <div className="mt-4">
-      <p>Average Score: {data.averageScore.toFixed(2)}</p>
-      <Table className="mt-4">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-white">Name</TableHead>
-            <TableHead className="text-white">Score</TableHead>
-            <TableHead className="text-white">Date</TableHead>
-            <TableHead className='text-white'>View Submission</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.submissions.slice(0, showAll ? data.submissions.length : 5).map(sub => (
-            <TableRow key={sub.id}>
-              <TableCell className="border-t border-gray-700">{sub.studentName}</TableCell>
-              <TableCell className="border-t border-gray-700">{sub.score}%</TableCell>
-              <TableCell className="border-t border-gray-700">{new Date(sub.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell className="border-t border-gray-700">
-                    <Link href={`/submission/${sub.id}`}>
-                    <Button variant="secondary" size="icon">
-                        <Eye className="h-4 w-4" />
-                    </Button>
-                    </Link>
-                    </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {!showAll && data.submissions.length > 5 && (
-        <Button variant="secondary" onClick={() => setShowAll(true)} className="mt-2">
-          Show All
-        </Button>
-      )}
-    </div>
-  );
+    if (data.submissions.length === 0) {
+        return <p>No submissions found.</p>;
+    } else {
+        if(data.averageScore === null){
+            return <p>No submissions found.</p>
+        }
+        else {
+    return (
+        <div className="mt-4">
+            <p>Average Score: {data.averageScore.toFixed(2)}</p>
+            <Table className="mt-4">
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="text-white">Name</TableHead>
+                        <TableHead className="text-white">Score</TableHead>
+                        <TableHead className="text-white">Date</TableHead>
+                        <TableHead className="text-white">View Submission</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {data.submissions.length === 0 ? (
+                        <TableRow>
+                            <TableCell className="border-t border-gray-700" colSpan={4}>
+                                No submissions found.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        data.submissions.slice(0, showAll ? data.submissions.length : 5).map(sub => (
+                            <TableRow key={sub.id}>
+                                <TableCell className="border-t border-gray-700">{sub.studentName}</TableCell>
+                                <TableCell className="border-t border-gray-700">{sub.score}%</TableCell>
+                                <TableCell className="border-t border-gray-700">{new Date(sub.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell className="border-t border-gray-700">
+                                    <Link href={`/submission/${sub.id}`}>
+                                        <Button variant="secondary" size="icon">
+                                            <Eye className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+            {!showAll && data.submissions.length > 5 && (
+                <Button variant="secondary" onClick={() => setShowAll(true)} className="mt-2">
+                    Show All
+                </Button>
+            )}
+        </div>
+    
+    );
+}
+}
 };
 
-// ... (rest of the code remains the same)
-
-
-interface ViewAllSubmissionsModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    submissions: Submission[];
-  }
-  
-
-const ViewAllSubmissionsModal: React.FC<ViewAllSubmissionsModalProps> = ({
-    open,
-    onOpenChange,
-    submissions,
-  }) => {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="bg-black text-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-white">Name</TableHead>
-                <TableHead className="text-white">Score</TableHead>
-                <TableHead className="text-white">Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {submissions.map((sub) => (
-                <TableRow key={sub.id}>
-                  <TableCell className="border-t border-gray-700">
-                    {sub.studentName}
-                  </TableCell>
-                  <TableCell className="border-t border-gray-700">
-                    {sub.score}%
-                  </TableCell>
-                  <TableCell className="border-t border-gray-700">
-                    {new Date(sub.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="border-t border-gray-700">
-                  <Link href={`/submission/${sub.id}`}>
-                    <Button variant="secondary" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                </Link>
-                    </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-  
 
 
     const handleSignOut = async () => {
@@ -407,18 +370,19 @@ const ViewAllSubmissionsModal: React.FC<ViewAllSubmissionsModalProps> = ({
                                 <Edit className="mr-2 h-4 w-4" /> Edit Form
                             </Button>
                         </div>
-                       <DialogDescription className="mt-4">
-  {submissionsData[selectedForm.id] ? (
-    <div>
-      <h4 className="text-lg font-semibold mb-2">Submission Data</h4>
-      <p>Average Score: {submissionsData[selectedForm.id].averageScore.toFixed(2)}</p>
-      {renderSubmissions(selectedForm.id)}
-      {submissionsData[selectedForm.id].submissions.length > 5}
-    </div>
-  ) : (
-    <p>Loading submission data...</p>
-  )}
-</DialogDescription>
+                        <DialogDescription className="mt-4">
+                            {submissionsData[selectedForm.id] ? (
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-2">Submission Data</h4>
+
+                                    <p>Average Score: {submissionsData[selectedForm.id]?.averageScore?.toFixed(2)}</p>
+                                    {renderSubmissions(selectedForm?.id)}
+                                    {submissionsData[selectedForm?.id].submissions.length > 5}
+                                </div>
+                            ) : (
+                                <p>Loading submission data...</p>
+                            )}
+                        </DialogDescription>
 
                     </DialogContent>
                 )}
@@ -426,7 +390,5 @@ const ViewAllSubmissionsModal: React.FC<ViewAllSubmissionsModalProps> = ({
         </div>
     );
 }
-
-    // ... (rest of the code remains the same)
 
 export default Dashboard;
