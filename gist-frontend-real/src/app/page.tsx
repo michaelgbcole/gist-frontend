@@ -197,7 +197,7 @@ export default function GistDarkLandingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                What Educators Are Saying
+                What Educators Are Saying (These are definetely real I promise)
               </motion.h3>
               <motion.div
                 className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-2xl mx-auto"
