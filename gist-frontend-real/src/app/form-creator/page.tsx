@@ -128,6 +128,7 @@ function FormCreatorContent({ user }: { user: User }) {
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
                   placeholder="Enter title here"
                   className="text-3xl sm:text-5xl font-bold mb-4 bg-transparent border-b-2 border-blue-500 text-center w-full focus:outline-none"
                 />
@@ -135,6 +136,7 @@ function FormCreatorContent({ user }: { user: User }) {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleTitleSubmit}
+
                   className="absolute right-0 top-1/2 transform -translate-y-1/2 text-blue-500"
                 >
                   <Check size={24} />
@@ -161,31 +163,34 @@ function FormCreatorContent({ user }: { user: User }) {
           </div>
 
           <AnimatePresence>
-            {questionList.map((question, index) => (
-              <motion.div
-                key={question.id}
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -50 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="mb-6 bg-gray-800 rounded-lg p-6 relative"
-              >
-                {question.type === 'SAQ' ? (
-                  <SAQ id={question.id} onUpdate={handleSAQUpdate} />
-                ) : (
-                  <MultipleChoice id={question.id} onUpdate={handleMCUpdate} />
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => deleteQuestion(question.id)}
-                  className="absolute top-2 right-2 text-red-500"
-                >
-                  <X size={20} />
-                </motion.button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+  {questionList.map((question, index) => (
+    <>
+    <motion.div
+      key={question.id}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="mb-6 bg-gray-800 rounded-lg p-6 relative"
+    >
+      {question.type === 'SAQ' ? (
+        <SAQ id={question.id} onUpdate={handleSAQUpdate} onDeleteQuestion={deleteQuestion}/>
+      ) : (
+        <MultipleChoice id={question.id} onUpdate={handleMCUpdate} onDeleteQuestion={deleteQuestion} />
+      )}
+    </motion.div>
+          <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => deleteQuestion(question.id)}
+          className="absolute top-2 right-2 text-red-500"
+        >
+          <X size={20} />
+        </motion.button>
+        </>
+  ))}
+</AnimatePresence>
+
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -247,14 +252,14 @@ function FormCreatorContent({ user }: { user: User }) {
                   Add Multiple Choice
                 </motion.button>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setShowAddModal(false)}
-                className="absolute top-2 right-2 text-gray-400"
-              >
-                <X size={20} />
-              </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowAddModal(false)}
+        className="absolute top-2 right-2 text-red-500"
+      >
+        <X size={20} />
+      </motion.button>
             </motion.div>
           </motion.div>
         )}

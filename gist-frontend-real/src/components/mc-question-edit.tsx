@@ -1,10 +1,13 @@
 
 
+import { motion } from 'framer-motion';
+import { Edit3, X } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 interface MultipleChoiceProps {
   id: number;
   onUpdate: (id: number, question: string, options: string[], correctOptions: number[]) => void;
+  onDeleteQuestion: (id: number) => void;
   initialQuestion?: string;
   initialOptions?: string[];
   initialCorrectOptions?: number[];
@@ -13,6 +16,7 @@ interface MultipleChoiceProps {
 const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({ 
   id, 
   onUpdate, 
+  onDeleteQuestion,
   initialQuestion = '', 
   initialOptions = ['', ''], 
   initialCorrectOptions = [] 
@@ -65,25 +69,37 @@ const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({
     setIsEditing(true);
   };
 
+  const handleDelete = () => {
+    onDeleteQuestion(id);
+  };
+
   return (
     <>
       {submitted && !isEditing ? (
-        <>
-          <div className="flex flex-col items-center space-y-4 padding pb-2">
-            <div className="text-white rounded w-full text-left text-3xl flex justify-between items-center">
-              {question}
-              <button onClick={handleEdit} className="ml-2 text-blue-500">
-                ✏️
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
+       <>
+       <div className="flex flex-col items-center space-y-4 padding pb-2">
+         <div className="text-white rounded w-full text-left text-3xl flex justify-between items-center">
+           {question}
+           <div className="flex">
+             <button onClick={handleEdit} className="ml-2 text-blue-500">
+               <Edit3 />
+             </button>
+             <motion.button
+               whileHover={{ scale: 1.1 }}
+               whileTap={{ scale: 0.9 }}
+               onClick={handleDelete}
+               className="ml-2 text-red-500"
+             >
+               <X size={20} />
+             </motion.button>
+           </div>
+         </div>
+       </div>
             {options.map((option, index) => (
               <div key={index} className="text-white border border-gray-300 p-2 rounded w-full text-left">
                 {option} {correctOptions.includes(index) && '(Correct)'}
               </div>
             ))}
-          </div>
         </>
       ) : (
         <div className="flex flex-col items-center space-y-4">

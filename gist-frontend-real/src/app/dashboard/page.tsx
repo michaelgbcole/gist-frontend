@@ -360,7 +360,7 @@ const fetchSubmissions = async (formId: number) => {
                                 onClick={() => copyToClipboard(`${window.location.origin}/form/${selectedForm.uniqueLink}`)}
                                 className="mr-2"
                             >
-                                <Copy className="mr-2 h-4 w-4" /> Share Link
+                                <Copy className="mr-2 h-4 w-4" /> Copy Link
                             </Button>
                             <Button
                                 variant="secondary"
