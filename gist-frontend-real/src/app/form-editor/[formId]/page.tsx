@@ -94,7 +94,7 @@ function FormEditorContent({ user }: { user: User }) {
 
       if (response.ok) {
         alert('Form saved successfully!')
-        router.push('/dashboard') // Redirect to dashboard after saving
+        router.push('/dashboard/quizzes') // Redirect to dashboard after saving
       } else {
         console.error('Error saving form:', await response.json())
       }
@@ -202,6 +202,7 @@ function FormEditorContent({ user }: { user: User }) {
                   <SAQ
                     id={question.id}
                     onUpdate={handleSAQUpdate}
+                    onDeleteQuestion={deleteQuestion}
                     initialQuestion={question.question}
                     initialGist={question.gist}
                   />
@@ -209,6 +210,7 @@ function FormEditorContent({ user }: { user: User }) {
                   <MultipleChoice
                     id={question.id}
                     onUpdate={handleMCUpdate}
+                    onDeleteQuestion={deleteQuestion}
                     initialQuestion={question.question}
                     initialOptions={question.options}
                     initialCorrectOptions={question.correctOptions}

@@ -75,8 +75,8 @@ export default async function handler(
           },
         ],
         mode: 'subscription',
-        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/dashboard`,
+        success_url: `${req.headers.origin}/dashboard/quizzes?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/dashboard/quizzes`,
       });
 
       res.status(200).json({ sessionId: session.id });
