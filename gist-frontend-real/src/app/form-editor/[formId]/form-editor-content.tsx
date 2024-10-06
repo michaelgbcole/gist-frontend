@@ -8,7 +8,6 @@ import SAQ from '@/components/saq-question-edit'
 import MultipleChoice from '@/components/mc-question-edit'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
 
 interface Question {
   id: number
@@ -33,10 +32,6 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   useEffect(() => {
     if (formId) {
