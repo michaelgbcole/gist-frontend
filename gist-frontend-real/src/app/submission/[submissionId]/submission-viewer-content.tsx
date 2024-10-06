@@ -9,7 +9,7 @@ import Footer from '@/components/footer'
 import dynamic from 'next/dynamic'
 import { User } from '@supabase/supabase-js'
 
-const AuthWrapper = dynamic(() => import('@/components/AuthWrapper'), { ssr: false })
+
 
 interface SubmissionData {
   id: number;

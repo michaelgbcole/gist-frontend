@@ -11,25 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import dynamic from 'next/dynamic';
 import { pdfjs } from 'react-pdf';
+import { usePDFJS } from '@/hooks/use-pdfjs';
+import { getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-// Dynamically import the PDF viewer components
-const PDFViewer = dynamic(() => import('react-pdf').then(mod => ({
-    default: mod.Document,
-})), {
-    ssr: false,
-    loading: () => (
-        <div className="flex items-center justify-center h-[600px] bg-gray-900">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
-        </div>
-    ),
-});
-
-const PDFPage = dynamic(() => import('react-pdf').then(mod => mod.Page), {
-    ssr: false,
-});
 
 type FileInfo = {
     name: string;
@@ -177,6 +161,30 @@ export default function FileUploadDashboard() {
         return new Date(dateString).toLocaleDateString();
     };
 
+    const renderPDFPreview = async (pdfjs: { getDocument: typeof getDocument }) => {
+        if (!previewFile || previewFile.type !== 'pdf') return;
+
+        const loadingTask = pdfjs.getDocument(previewFile.file.url);
+        const pdf: PDFDocumentProxy = await loadingTask.promise;
+        const page: PDFPageProxy = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 1.5 });
+
+        const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+            canvasContext: context!,
+            viewport: viewport,
+        };
+        await page.render(renderContext).promise;
+    };
+
+    usePDFJS(renderPDFPreview, [previewFile?.file.url]);
+
+    usePDFJS(renderPDFPreview, [previewFile?.file.url]);
+
     const renderPreview = () => {
         if (!previewFile) return null;
 
@@ -184,23 +192,7 @@ export default function FileUploadDashboard() {
             case 'pdf':
                 return (
                     <div className="w-full h-[600px] overflow-auto bg-gray-900">
-                        <PDFViewer
-                            file={previewFile.file.url}
-                            onLoadError={(error) => {
-                                console.error('Error loading PDF:', error);
-                                toast({
-                                    title: "Error",
-                                    description: "Failed to load PDF preview",
-                                    variant: "destructive",
-                                });
-                            }}
-                        >
-                            <PDFPage 
-                                pageNumber={1} 
-                                renderTextLayer={false}
-                                renderAnnotationLayer={false}
-                            />
-                        </PDFViewer>
+                        <canvas id="pdf-canvas" className="w-full h-full"></canvas>
                     </div>
                 );
             case 'text':
