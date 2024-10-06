@@ -3,15 +3,33 @@
 import React, { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { User } from '@supabase/supabase-js';
-import ResponsiveMenuBar from '@/components/nav-bar'
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Upload, Trash2, Download, Eye, X } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, Trash2, Download, Eye, X, FileText } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import NavBar from '@/components/nav-bar';
-import Footer from '@/components/footer';
+import dynamic from 'next/dynamic';
+import { pdfjs } from 'react-pdf';
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+// Dynamically import the PDF viewer components
+const PDFViewer = dynamic(() => import('react-pdf').then(mod => ({
+    default: mod.Document,
+})), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-[600px] bg-gray-900">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+        </div>
+    ),
+});
+
+const PDFPage = dynamic(() => import('react-pdf').then(mod => mod.Page), {
+    ssr: false,
+});
 
 type FileInfo = {
     name: string;
@@ -20,11 +38,18 @@ type FileInfo = {
     size?: number;
 };
 
+type PreviewInfo = {
+    file: FileInfo;
+    content?: string;
+    type: 'pdf' | 'text' | 'doc' | 'unknown';
+};
+
 export default function FileUploadDashboard() {
     const [user, setUser] = useState<User | null>(null);
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [uploading, setUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
+    const [previewFile, setPreviewFile] = useState<PreviewInfo | null>(null);
     
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -54,6 +79,40 @@ export default function FileUploadDashboard() {
                 description: "Failed to fetch files",
                 variant: "destructive",
             });
+        }
+    };
+
+    const getFileType = (fileName: string): 'pdf' | 'text' | 'doc' | 'unknown' => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'pdf':
+                return 'pdf';
+            case 'txt':
+                return 'text';
+            case 'doc':
+            case 'docx':
+                return 'doc';
+            default:
+                return 'unknown';
+        }
+    };
+
+    const handlePreview = async (file: FileInfo) => {
+        const fileType = getFileType(file.name);
+        setPreviewFile({ file, type: fileType });
+
+        if (fileType === 'text') {
+            try {
+                const response = await fetch(file.url);
+                const content = await response.text();
+                setPreviewFile(prev => prev ? { ...prev, content } : null);
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: "Failed to load file preview",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
@@ -104,6 +163,7 @@ export default function FileUploadDashboard() {
 
             await fetchFiles(user.id);
             setSelectedFile(null);
+            setPreviewFile(null);
         } catch (error: any) {
             toast({
                 title: "Error",
@@ -117,19 +177,68 @@ export default function FileUploadDashboard() {
         return new Date(dateString).toLocaleDateString();
     };
 
-    const formatFileSize = (bytes?: number) => {
-        if (!bytes) return 'N/A';
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        if (bytes === 0) return '0 Byte';
-        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)).toString());
-        return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
+    const renderPreview = () => {
+        if (!previewFile) return null;
+
+        switch (previewFile.type) {
+            case 'pdf':
+                return (
+                    <div className="w-full h-[600px] overflow-auto bg-gray-900">
+                        <PDFViewer
+                            file={previewFile.file.url}
+                            onLoadError={(error) => {
+                                console.error('Error loading PDF:', error);
+                                toast({
+                                    title: "Error",
+                                    description: "Failed to load PDF preview",
+                                    variant: "destructive",
+                                });
+                            }}
+                        >
+                            <PDFPage 
+                                pageNumber={1} 
+                                renderTextLayer={false}
+                                renderAnnotationLayer={false}
+                            />
+                        </PDFViewer>
+                    </div>
+                );
+            case 'text':
+                return (
+                    <div className="w-full max-h-[600px] overflow-auto p-4 bg-gray-900 rounded">
+                        <pre className="whitespace-pre-wrap font-mono text-sm">
+                            {previewFile.content}
+                        </pre>
+                    </div>
+                );
+            case 'doc':
+                return (
+                    <div className="flex flex-col items-center justify-center p-8 bg-gray-900 rounded">
+                        <FileText className="h-16 w-16 mb-4" />
+                        <p className="text-center mb-4">
+                            Preview not available for Word documents. Please download the file to view its contents.
+                        </p>
+                        <Button
+                            variant="secondary"
+                            onClick={() => window.open(previewFile.file.url, '_blank')}
+                        >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Document
+                        </Button>
+                    </div>
+                );
+            default:
+                return (
+                    <div className="text-center p-4">
+                        Preview not available for this file type.
+                    </div>
+                );
+        }
     };
 
     return (
         <>
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
-      <ResponsiveMenuBar />
-      <main className="flex-grow flex flex-col items-center justify-start p-4 sm:p-12">
+            {/* Main Dashboard Grid Item */}
             <Card 
                 className="bg-black text-white cursor-pointer hover:bg-gray-800 transition-colors" 
                 onClick={() => files.length > 0 && setSelectedFile(files[0])}
@@ -142,17 +251,23 @@ export default function FileUploadDashboard() {
                 </CardContent>
             </Card>
 
-        </main>
-        <Footer />
-    </div>
-
             {/* File Details Dialog */}
-            <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
-                <DialogContent className="bg-black text-white">
+            <Dialog open={!!selectedFile} onOpenChange={() => {
+                setSelectedFile(null);
+                setPreviewFile(null);
+            }}>
+                <DialogContent className="bg-black text-white max-w-4xl">
                     <DialogHeader>
                         <DialogTitle className="flex justify-between items-center">
                             <span>File Details</span>
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedFile(null)}>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => {
+                                    setSelectedFile(null);
+                                    setPreviewFile(null);
+                                }}
+                            >
                                 <X className="h-4 w-4" />
                             </Button>
                         </DialogTitle>
@@ -176,58 +291,74 @@ export default function FileUploadDashboard() {
                         />
                     </div>
                     <DialogDescription className="mt-4">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="text-white">Name</TableHead>
-                                    <TableHead className="text-white">Date</TableHead>
-                                    <TableHead className="text-white">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {files.map((file) => (
-                                    <TableRow key={file.name}>
-                                        <TableCell className="border-t border-gray-700">
-                                            {file.name}
-                                        </TableCell>
-                                        <TableCell className="border-t border-gray-700">
-                                            {formatDate(file.created_at)}
-                                        </TableCell>
-                                        <TableCell className="border-t border-gray-700">
-                                            <div className="flex space-x-2">
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    onClick={() => window.open(file.url, '_blank')}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(file.url, '_blank');
-                                                    }}
-                                                >
-                                                    <Download className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(file.name);
-                                                    }}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
+                        {previewFile ? (
+                            <div className="space-y-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setPreviewFile(null)}
+                                >
+                                    <X className="mr-2 h-4 w-4" />
+                                    Close Preview
+                                </Button>
+                                {renderPreview()}
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-white">Name</TableHead>
+                                        <TableHead className="text-white">Date</TableHead>
+                                        <TableHead className="text-white">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {files.map((file) => (
+                                        <TableRow key={file.name}>
+                                            <TableCell className="border-t border-gray-700">
+                                                {file.name}
+                                            </TableCell>
+                                            <TableCell className="border-t border-gray-700">
+                                                {formatDate(file.created_at)}
+                                            </TableCell>
+                                            <TableCell className="border-t border-gray-700">
+                                                <div className="flex space-x-2">
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handlePreview(file);
+                                                        }}
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            window.open(file.url, '_blank');
+                                                        }}
+                                                    >
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(file.name);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </DialogDescription>
                 </DialogContent>
             </Dialog>
