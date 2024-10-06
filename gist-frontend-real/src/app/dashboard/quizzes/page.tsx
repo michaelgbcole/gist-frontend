@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { User } from '@supabase/supabase-js';
 import Link from 'next/link';
 import ResponsiveMenuBar from '@/components/nav-bar';
@@ -56,7 +56,10 @@ function Quizzes() {
     const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const supabase = createClientComponentClient();
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
     useEffect(() => {
         const getUser = async () => {

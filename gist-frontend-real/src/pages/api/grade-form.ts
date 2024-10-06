@@ -1,6 +1,7 @@
-import generateGrade from '@/util/ai';
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
+import generateGrade from '@/util/ai';
 
 const prisma = new PrismaClient();
 

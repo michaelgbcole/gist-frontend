@@ -1,15 +1,21 @@
 "use client";
 import React, { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import Footer from '@/components/footer';
 import NavBar from '@/components/nav-bar';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { FaGoogle } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
-export default function Component() {
-  const supabase = createClientComponentClient();
+export default function Login() {
+  const router = useRouter();
   const [showRoleSelection, setShowRoleSelection] = useState(false);
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const handleGoogleAuth = async (isSignUp: boolean, role?: string) => {
     const redirectTo = `${window.location.origin}/auth/v1/callback?isSignUp=${isSignUp}${role ? `&role=${role}` : ''}`;
