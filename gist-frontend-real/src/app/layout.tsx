@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-            <Head>
+            <head>
         {/* Open Graph meta tags */}
         <meta property="og:title" content="Gist" />
         <meta property="og:description" content="The future of education" />
@@ -32,7 +32,7 @@ export default function RootLayout({
         <meta name="twitter:title" content="Gist" />
         <meta name="twitter:description" content="The future of education" />
         <meta name="twitter:image" content="https://gist-quiz.com/gist.png" />
-      </Head>
+      </head>
       <CSPostHogProvider>
       <body className={inter.className}>{children}
         <Analytics />
