@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
+import gradeEssay from '@/util/essay-grader';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { id: String(id) },
         select: { id: true, email: true, name: true, isPayer: true },
       });
+      gradeEssay('https://s28.q4cdn.com/392171258/files/doc_downloads/test.pdf');
 
       if (user) {
         res.status(200).json(user);
