@@ -13,6 +13,7 @@ import dynamic from 'next/dynamic';
 import { pdfjs } from 'react-pdf';
 import { usePDFJS } from '@/hooks/use-pdfjs';
 import { getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
+import RubricMaker from '@/components/rubric-creator';
 
 
 type FileInfo = {
@@ -241,8 +242,9 @@ export default function FileUploadDashboard() {
                         {files.length} File{files.length !== 1 ? 's' : ''} Uploaded
                     </h3>
                 </CardContent>
+            
             </Card>
-
+            <RubricMaker userId={user?.id ?? ''} />
             {/* File Details Dialog */}
             <Dialog open={!!selectedFile} onOpenChange={() => {
                 setSelectedFile(null);

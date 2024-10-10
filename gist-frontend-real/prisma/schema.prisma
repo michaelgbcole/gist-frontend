@@ -47,8 +47,14 @@ model Submission {
   id         Int       @id @default(autoincrement())
   studentId  String
   formId     Int
-  answers    Json      // Use a JSON field to store an array of answers
+  answers    Json      
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   score     Int
+}
+
+model Rubric {
+  id Int  @id @default(autoincrement())
+  userId String
+  rubricJSON Json //json in sql lets fucking go
 }
