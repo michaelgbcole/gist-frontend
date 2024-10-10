@@ -1,7 +1,7 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import generateGrade from '@/util/ai';
+import generateGrade from '@/util/quiz-grader';
 
 const prisma = new PrismaClient();
 
