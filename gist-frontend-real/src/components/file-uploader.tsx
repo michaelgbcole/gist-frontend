@@ -13,9 +13,18 @@ type FileInfo = {
     size?: number;
 };
 
+type rubricJSON = {
+    title: string;
+    criteria: {
+        name: string;
+        description: string;
+        points: number;
+    }[];
+}
+
 type Rubric = {
     id: string;
-    name: string;
+    rubricJSON: rubricJSON;
 };
 
 interface FileUploadDialogProps {
@@ -57,7 +66,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
 
   const fetchRubrics = async (userId: string) => {
     try {
-      const response = await fetch(`/api/get-rubrics/${userId}`);
+      const response = await fetch(`/api/get-rubrics?userId=${userId}`);
       if (!response.ok) throw new Error('Failed to fetch rubrics');
       const data = await response.json();
       setRubrics(data);
@@ -207,7 +216,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
               <SelectContent>
                 {rubrics.map((rubric) => (
                   <SelectItem key={rubric.id} value={rubric.id}>
-                    {rubric.name}
+                    {rubric.rubricJSON?.title ?? ''}
                   </SelectItem>
                 ))}
               </SelectContent>

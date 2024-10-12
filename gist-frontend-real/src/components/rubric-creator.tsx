@@ -28,7 +28,8 @@ type RubricMakerProps = {
   const RubricMaker: React.FC<RubricMakerProps> = ({ userId }) => {
     const [open, setOpen] = useState(false);
     const [criteria, setCriteria] = useState<Criterion[]>([{ name: '', description: '', points: 0 }]);
-  
+    const [title, setTitle] = useState('');
+
     const addCriterion = () => {
       setCriteria([...criteria, { name: '', description: '', points: 0 }]);
     };
@@ -46,6 +47,7 @@ type RubricMakerProps = {
   
     const handleConfirm = async () => {
       const rubric = {
+        title,
         criteria: criteria.filter(c => c.name && c.description)
       };
       console.log(JSON.stringify(rubric, null, 2));
@@ -83,6 +85,16 @@ type RubricMakerProps = {
           <DialogTitle>Rubric Maker</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto pr-4">
+        <div className="mb-4">
+            <Label htmlFor="rubric-title">Rubric Title</Label>
+            <Input
+              id="rubric-title"
+              placeholder="Enter rubric title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="mt-2"
+            />
+          </div>
           {criteria.map((criterion, index) => (
             <Card key={index} className="mb-4">
               <CardContent className="pt-4">
