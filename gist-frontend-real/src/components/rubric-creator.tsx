@@ -78,7 +78,7 @@ type RubricMakerProps = {
       <DialogTrigger asChild>
         <Button>Create Rubric</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Rubric Maker</DialogTitle>
         </DialogHeader>

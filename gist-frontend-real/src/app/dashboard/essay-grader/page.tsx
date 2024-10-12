@@ -14,6 +14,7 @@ import { pdfjs } from 'react-pdf';
 import { usePDFJS } from '@/hooks/use-pdfjs';
 import { getDocument, PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import RubricMaker from '@/components/rubric-creator';
+import FileUploadDialog from '@/components/file-uploader';
 
 
 type FileInfo = {
@@ -245,6 +246,7 @@ export default function FileUploadDashboard() {
             
             </Card>
             <RubricMaker userId={user?.id ?? ''} />
+            <FileUploadDialog userId={user?.id ?? ''} supabase={supabase} />
             {/* File Details Dialog */}
             <Dialog open={!!selectedFile} onOpenChange={() => {
                 setSelectedFile(null);

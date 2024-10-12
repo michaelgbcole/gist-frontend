@@ -59,9 +59,11 @@ function Dashboard() {
                         <FaClipboardCheck className="mr-2" />
                         Gist Quizzes
                     </Link>
-                    <div className="bg-gray-500 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center cursor-not-allowed">
+                    <div className="">
+                    <Link href="/dashboard/essay-grader" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center transition-colors duration-300">
                         <FaEdit className="mr-2" />
                         Gist Essay Grader
+                    </Link>
                     </div>
                 </div>
             </div>
