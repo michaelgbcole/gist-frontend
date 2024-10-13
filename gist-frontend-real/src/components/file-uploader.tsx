@@ -38,6 +38,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
   const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
   const [selectedRubric, setSelectedRubric] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [gradingResult, setGradingResult] = useState<string | null>(null);
+
   const [grading, setGrading] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'upload' | 'select'>('upload');
@@ -121,6 +123,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
     if (!selectedFile || !selectedRubric) return;
 
     setGrading(true);
+    setGradingResult(null);
     try {
       const response = await fetch('/api/grade-essay', {
         method: 'POST',
@@ -135,15 +138,15 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
 
       if (!response.ok) throw new Error('Failed to grade essay');
 
+      const result = await response.json();
+      setGradingResult(JSON.stringify(result, null, 2));
+
       toast({
         title: "Success",
         description: "Essay graded successfully",
       });
 
-      // Reset state after grading
-      setSelectedFile(null);
-      setSelectedRubric(null);
-      setStep('upload');
+      // We're not resetting the state here anymore so the user can see the result
     } catch (error) {
       toast({
         title: "Error",
@@ -154,6 +157,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
       setGrading(false);
     }
   };
+
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -230,8 +235,21 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
               ) : (
                 'Grade'
               )}
-            </Button>
-            <Button onClick={() => setStep('upload')}>Back</Button>
+                        </Button>
+            {gradingResult && (
+              <div className="mt-4">
+                <h4 className="text-lg font-semibold mb-2">Grading Result:</h4>
+                <pre className="bg-gray-100 p-2 rounded overflow-auto max-h-60">
+                  {gradingResult}
+                </pre>
+              </div>
+            )}
+            <Button onClick={() => {
+              setStep('upload');
+              setGradingResult(null);
+              setSelectedFile(null);
+              setSelectedRubric(null);
+            }}>Back</Button>
           </div>
         )}
       </DialogContent>
