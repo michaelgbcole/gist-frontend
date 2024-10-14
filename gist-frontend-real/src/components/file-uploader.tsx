@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Upload, File } from "lucide-react";
+import { Loader2, Upload, File, ChevronUp, ChevronDown } from "lucide-react";
 import RubricMaker from './rubric-creator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { parse } from 'path';
@@ -30,6 +30,11 @@ type Rubric = {
     rubricJSON: rubricJSON;
 };
 
+type response = {
+    feedback: string;
+    score: number;
+}
+
 interface FileUploadDialogProps {
   userId: string;
   supabase: any; // Replace 'any' with the appropriate type if available
@@ -44,6 +49,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
   const [uploading, setUploading] = useState(false);
   const [gradingResult, setGradingResult] = useState<string | null>(null);
   const [parsedResult, setParsedResult] = useState<XMLDocument | null>(null);
+  const [showMore, setShowMore] = useState(false);
+  const [criteriaFeedback, setCriteriaFeedback] = useState<response[]>([]);
 
 
   const [grading, setGrading] = useState(false);
@@ -134,6 +141,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
     const parser = new DOMParser();
     setGrading(true);
     setGradingResult(null);
+    setCriteriaFeedback([]);
+    setShowMore(false);
     try {
       const response = await fetch('/api/grade-essay', {
         method: 'POST',
@@ -149,13 +158,22 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
       if (!response.ok) throw new Error('Failed to grade essay');
 
       const result = await response.json();
-      console.log('result:', result);
-      // Parse the result string into an object
-      console.log('what its being fed type shit', JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll("\\", ''))
-      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll("\\", ''), 'text/xml');
-      setParsedResult(parsedResult)
-      console.log('test type shit', parsedResult.getElementsByTagName('finalScore')[0])
-      console.log('parsedResult:', parsedResult);
+      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll('\\', ''), 'text/xml');
+      setParsedResult(parsedResult);
+
+      // Parse criteriaFeedback
+      const criteriaFeedbackElement = parsedResult.getElementsByTagName('criteriaFeedback')[0];
+      console.log('criteriaFeedbackElement:', criteriaFeedbackElement.textContent?.replaceAll('[', '')?.replaceAll(']', '')?.slice(1, -1));
+      
+      if (criteriaFeedbackElement) {
+        try {
+          const feedbackJSON = JSON.parse(criteriaFeedbackElement.textContent?.replaceAll('[', '')?.replaceAll(']', '')?.slice(1, -1) || '[]');
+          console.log('feedbackJSON:', feedbackJSON);
+          setCriteriaFeedback(feedbackJSON);
+        } catch (error) {
+          console.error('Failed to parse criteriaFeedback:', error);
+        }
+      }
 
       toast({
         title: "Success",
@@ -173,6 +191,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
   };
 
 
+
   
 
 
@@ -181,8 +200,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
       <DialogTrigger asChild>
         <Button>Manage Files</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[750px] max-h-[80vh] overflow-y-auto">        <DialogHeader>
           <DialogTitle>{step === 'upload' ? 'Manage Files' : 'Grade Essay'}</DialogTitle>
         </DialogHeader>
         {step === 'upload' ? (
@@ -252,16 +270,54 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
               ) : (
                 'Grade'
               )}
-                        </Button>
-        {parsedResult && (
-            <div className="mt-4">
-              <h4 className="text-lg font-semibold mb-2">Grading Result:</h4>
+              </Button>
+                        {parsedResult && (
               <div className="mt-4">
-                <p><strong>Final Score:</strong> {parsedResult?.getElementsByTagName('finalScore')[0].textContent}</p>
-                <p><strong>Overall Feedback:</strong> {parsedResult?.getElementsByTagName('overallFeedback')[0].textContent}</p>
-              </div>
-            </div>
-          )}
+                <h4 className="text-lg font-semibold mb-2">Grading Result:</h4>
+                <div className="mt-4">
+                  <p><strong>Final Score:</strong> {parsedResult?.getElementsByTagName('finalScore')[0].textContent}</p>
+                  <p><strong>Overall Feedback:</strong> {parsedResult?.getElementsByTagName('overallFeedback')[0].textContent}</p>
+                </div>
+                  <Button
+                    onClick={() => setShowMore(!showMore)}
+                    className="mt-2"
+                    variant="outline"
+                  >
+                    {showMore ? (
+                      <>
+                        Show Less <ChevronUp className="ml-2 h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        Show More <ChevronDown className="ml-2 h-4 w-4" />
+                        
+                      </>
+                    )}
+                  </Button>
+                  {showMore ? (
+                      <>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Criteria</TableHead>
+                              <TableHead>Feedback</TableHead>
+                              <TableHead>Score</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {criteriaFeedback && Object.entries(criteriaFeedback).map(([criterion, feedback]) => (
+                              <TableRow key={criterion}>
+                                <TableCell>{criterion}</TableCell>
+                                <TableCell>{feedback.feedback}</TableCell>
+                                <TableCell>{feedback.score}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </>
+                    ) : null}
+
+                
             <Button onClick={() => {
               setStep('upload');
               setGradingResult(null);
@@ -270,6 +326,7 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
             }}>Back</Button>
           </div>
         )}
+      </div>)}
       </DialogContent>
     </Dialog>
   );
