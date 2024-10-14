@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Upload, File } from "lucide-react";
+import RubricMaker from './rubric-creator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { parse } from 'path';
 
 type FileInfo = {
     name: string;
@@ -32,13 +35,16 @@ interface FileUploadDialogProps {
   supabase: any; // Replace 'any' with the appropriate type if available
 }
 
+
 const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase }) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [rubrics, setRubrics] = useState<Rubric[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null);
-  const [selectedRubric, setSelectedRubric] = useState<string | null>(null);
+  const [selectedRubric, setSelectedRubric] = useState<Rubric | null>(null);
   const [uploading, setUploading] = useState(false);
   const [gradingResult, setGradingResult] = useState<string | null>(null);
+  const [parsedResult, setParsedResult] = useState<XMLDocument | null>(null);
+
 
   const [grading, setGrading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -56,7 +62,10 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
       const response = await fetch(`/api/get-essays?userId=${userId}`);
       if (!response.ok) throw new Error('Failed to fetch files');
       const data = await response.json();
-      setFiles(data);
+      console.log('datafrfr', data)
+      // Filter out the .emptyFolderPlaceholder file
+      const filteredData = data.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
+      setFiles(filteredData);
     } catch (error) {
       toast({
         title: "Error",
@@ -116,12 +125,13 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
   };
 
   const handleRubricSelect = (rubricId: string) => {
-    setSelectedRubric(rubricId);
+    const selected = rubrics.find(rubric => rubric.id === rubricId) || null;
+    setSelectedRubric(selected);
   };
 
   const handleGrade = async () => {
     if (!selectedFile || !selectedRubric) return;
-
+    const parser = new DOMParser();
     setGrading(true);
     setGradingResult(null);
     try {
@@ -132,21 +142,25 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
         },
         body: JSON.stringify({
           pdfUrl: selectedFile.url,
-          rubricId: selectedRubric,
+          rubricId: selectedRubric.id,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to grade essay');
 
       const result = await response.json();
-      setGradingResult(JSON.stringify(result, null, 2));
+      console.log('result:', result);
+      // Parse the result string into an object
+      console.log('what its being fed type shit', JSON.stringify(result?.results)?.slice(1, -1))
+      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll(String.raw`\n`, ''), 'text/xml');
+      setParsedResult(parsedResult)
+      console.log('test type shit', parsedResult.getElementsByTagName('finalScore')[0])
+      console.log('parsedResult:', parsedResult);
 
       toast({
         title: "Success",
         description: "Essay graded successfully",
       });
-
-      // We're not resetting the state here anymore so the user can see the result
     } catch (error) {
       toast({
         title: "Error",
@@ -158,6 +172,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
     }
   };
 
+
+  
 
 
   return (
@@ -211,10 +227,11 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
               )}
             </div>
           </div>
-        ) : (
+        ) : ( 
           <div className="grid gap-4 py-4">
             <p>Selected File: {selectedFile?.name}</p>
-            <Select onValueChange={handleRubricSelect}>
+            <RubricMaker userId={userId} />
+            <Select onValueChange={(value) => handleRubricSelect(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a rubric" />
               </SelectTrigger>
@@ -236,14 +253,15 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
                 'Grade'
               )}
                         </Button>
-            {gradingResult && (
+        {parsedResult && (
+            <div className="mt-4">
+              <h4 className="text-lg font-semibold mb-2">Grading Result:</h4>
               <div className="mt-4">
-                <h4 className="text-lg font-semibold mb-2">Grading Result:</h4>
-                <pre className="bg-gray-100 p-2 rounded overflow-auto max-h-60">
-                  {gradingResult}
-                </pre>
+                <p><strong>Final Score:</strong> {parsedResult?.getElementsByTagName('finalScore')[0].textContent}</p>
+                <p><strong>Overall Feedback:</strong> {parsedResult?.getElementsByTagName('overallFeedback')[0].textContent}</p>
               </div>
-            )}
+            </div>
+          )}
             <Button onClick={() => {
               setStep('upload');
               setGradingResult(null);
