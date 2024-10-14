@@ -151,8 +151,8 @@ const FileUploadDialog: React.FC<FileUploadDialogProps> = ({ userId, supabase })
       const result = await response.json();
       console.log('result:', result);
       // Parse the result string into an object
-      console.log('what its being fed type shit', JSON.stringify(result?.results)?.slice(1, -1))
-      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll(String.raw`\n`, ''), 'text/xml');
+      console.log('what its being fed type shit', JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and'))
+      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and'), 'text/xml');
       setParsedResult(parsedResult)
       console.log('test type shit', parsedResult.getElementsByTagName('finalScore')[0])
       console.log('parsedResult:', parsedResult);
