@@ -55,17 +55,18 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
   const [step, setStep] = useState<'upload' | 'select'>('upload')
 
   useEffect(() => {
-    if (open && userId) {
+    if (userId) {
       fetchFiles(userId)
       fetchRubrics(userId)
     }
-  }, [open, userId])
+  }, [userId])
 
   const fetchFiles = async (userId: string) => {
     try {
       const response = await fetch(`/api/get-essays?userId=${userId}`)
       if (!response.ok) throw new Error('Failed to fetch files')
       const data = await response.json()
+      console.log('data type shiitiiit', data)
       const filteredData = data.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder')
       setFiles(filteredData)
     } catch (error) {
