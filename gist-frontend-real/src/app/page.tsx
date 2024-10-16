@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useSpring, animated } from 'react-spring'
-import { ChevronRight, CheckCircle, Book, Brain, Clock, Star, Link } from 'lucide-react'
+import { ChevronRight, CheckCircle, Book, Brain, Clock, Star, BarChart } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import NavBar from '@/components/nav-bar'
 import Footer from '@/components/footer'
@@ -58,12 +58,12 @@ const StaticStarryBackground = () => {
   return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full pointer-events-none" />
 }
 
-export default function GistDarkLandingPage() {
+export default function GistLandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const testimonials = [
-    { name: 'Sarah Johnson', role: 'High School Teacher', content: 'Gist has revolutionized my grading process. It\'s accurate, fast, and gives me more time to focus on teaching.' },
-    { name: 'Dr. Michael Lee', role: 'University Professor', content: 'The AI-powered insights from Gist have helped me identify areas where my students need more support. It\'s an invaluable tool.' },
-    { name: 'Emily Chen', role: 'Education Coordinator', content: 'Gist has streamlined our entire assessment process. The time saved is incredible, and the analytics are top-notch.' },
+    { name: 'Sarah Johnson', role: 'High School History Teacher', content: 'Gist has cut my grading time by 80%. I now have more time to focus on improving my teaching methods.' },
+    { name: 'Dr. Michael Lee', role: 'High School English Teacher', content: 'The Essay Grader tool is a game-changer. It provides consistent and fair grading, which my students appreciate.' },
+    { name: 'Emily Chen', role: 'Education Coordinator', content: 'Gist helps us identify trends and improve our curriculum.' },
   ]
 
   useEffect(() => {
@@ -72,17 +72,6 @@ export default function GistDarkLandingPage() {
     }, 5000)
     return () => clearInterval(interval)
   }, [testimonials.length])
-
-  const floatingAnimation = useSpring({
-    from: { transform: 'translateY(0px)' },
-    to: async (next) => {
-      while (true) {
-        await next({ transform: 'translateY(10px)' })
-        await next({ transform: 'translateY(0px)' })
-      }
-    },
-    config: { duration: 2000 },
-  })
 
   return (
     <div className="min-h-screen bg-black text-white relative">
@@ -93,48 +82,38 @@ export default function GistDarkLandingPage() {
         </header>
 
         <main>
-          <section className="container mx-auto px-4 py-20 flex items-center justify-between">
+          <section className="container mx-auto px-4 py-20">
             <motion.div
-              className="w-1/2"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              className="max-w-2xl mx-auto text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <h2 className="text-5xl font-bold mb-6 text-white">Grade Smarter, Not Harder</h2>
-              <p className="text-xl mb-8 text-gray-300">Gist uses advanced AI to grade tests quickly and accurately, giving you more time to focus on what matters most - teaching.</p>
+              <h1 className="text-5xl font-bold mb-6 text-white">Revolutionize Your Grading with AI</h1>
+              <p className="text-xl mb-8 text-gray-300">Gist cuts teacher grading time by ~80% with powerful AI tools. Spend less time grading and more time teaching.</p>
               <a href="/login">
                 <Button size="lg" className="mr-4 bg-blue-400 text-black hover:bg-blue-500">
                   Get Started <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
             </motion.div>
-            {/* <animated.div style={floatingAnimation} className="w-1/2">
-              <motion.img
-                src="/placeholder.svg?height=400&width=400"
-                alt="AI Grading Illustration"
-                className="w-full"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              />
-            </animated.div> */}
           </section>
 
           <section id="features" className="py-20">
             <div className="container mx-auto px-4">
-              <motion.h3
+              <motion.h2
                 className="text-3xl font-bold text-center mb-12 text-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                Features that Make Grading a Breeze
-              </motion.h3>
+                Powerful Tools for Educators
+              </motion.h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {[
-                  { icon: Brain, title: 'AI-Powered Grading', description: 'Our advanced AI accurately grades tests in seconds.' },
-                  { icon: Clock, title: 'Time-Saving', description: 'Reduce grading time by up to 90%, giving you more time to teach.' },
-                  { icon: CheckCircle, title: 'Accuracy', description: 'Consistent and unbiased grading for every student.' },
+                  { icon: Brain, title: 'Essay Grader', description: 'AI-powered tool to grade essays quickly and consistently.' },
+                  { icon: CheckCircle, title: 'Quizzes', description: 'Create and grade quizzes effortlessly with our intelligent system.' },
+                  { icon: BarChart, title: 'Analytics (Coming Soon)', description: 'Gain insights into class performance and identify areas for improvement.' },
                 ].map((feature, index) => (
                   <motion.div
                     key={index}
@@ -144,7 +123,7 @@ export default function GistDarkLandingPage() {
                     transition={{ duration: 0.6, delay: index * 0.2 }}
                   >
                     <feature.icon className="h-12 w-12 text-blue-400 mb-4" />
-                    <h4 className="text-xl font-semibold mb-2 text-white">{feature.title}</h4>
+                    <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>
                     <p className="text-gray-300">{feature.description}</p>
                   </motion.div>
                 ))}
@@ -154,21 +133,21 @@ export default function GistDarkLandingPage() {
 
           <section id="how-it-works" className="py-20">
             <div className="container mx-auto px-4">
-              <motion.h3
+              <motion.h2
                 className="text-3xl font-bold text-center mb-12 text-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                How Gist Works
-              </motion.h3>
+                How Gist Transforms Your Grading Process
+              </motion.h2>
               <div className="flex justify-center">
                 <motion.ol className="relative border-l border-gray-700">
                   {[
-                    { title: 'Upload Tests', description: 'Scan or upload your tests to the Gist platform.' },
-                    { title: 'AI Analysis', description: 'Our AI analyzes and grades the tests with high accuracy.' },
-                    { title: 'Review Results', description: 'Review the graded tests and AI-generated insights.' },
-                    { title: 'Provide Feedback', description: 'Use the results to provide targeted feedback to students.' },
+                    { title: 'Upload Assignments', description: 'Submit essays or quizzes to the Gist platform.' },
+                    { title: 'AI Grading', description: 'Our advanced AI grades assignments with high accuracy.' },
+                    { title: 'Review Results', description: 'Quickly review AI-graded assignments and make adjustments if needed.' },
+                    { title: 'Analyze Performance', description: 'Use analytics to gain insights into class and individual student performance.' },
                   ].map((step, index) => (
                     <motion.li
                       key={index}
@@ -191,14 +170,14 @@ export default function GistDarkLandingPage() {
 
           <section id="testimonials" className="py-20">
             <div className="container mx-auto px-4">
-              <motion.h3
+              <motion.h2
                 className="text-3xl font-bold text-center mb-12 text-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                What Educators Are Saying (These are definetely real I promise)
-              </motion.h3>
+                What Educators Are Saying
+              </motion.h2>
               <motion.div
                 className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-2xl mx-auto"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -217,21 +196,21 @@ export default function GistDarkLandingPage() {
 
           <section className="py-20">
             <div className="container mx-auto px-4 text-center">
-              <motion.h3
+              <motion.h2
                 className="text-3xl font-bold mb-6 text-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                Ready to Transform Your Grading Process?
-              </motion.h3>
+                Ready to Revolutionize Your Grading?
+              </motion.h2>
               <motion.p
                 className="text-xl mb-8 text-gray-300"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                Join thousands of educators who are saving time and improving their teaching with Gist.
+                Join Gist today and experience the power of AI-assisted grading. Save time, improve consistency, and gain valuable insights into your class performance.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -240,7 +219,7 @@ export default function GistDarkLandingPage() {
               >
                 <a href='/login'>
                 <Button size="lg" className="mr-4 bg-blue-400 text-black hover:bg-blue-500">
-                  Start Free Trial
+                  Start Your Free Trial
                 </Button>
                 </a>
               </motion.div>
