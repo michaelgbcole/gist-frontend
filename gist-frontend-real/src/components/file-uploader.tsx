@@ -183,14 +183,6 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Grade Essay</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[750px] max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle>{step === 'upload' ? 'Manage Files' : 'Grade Essay'}</DialogTitle>
-        </DialogHeader>
         <ScrollArea  className="h-[60vh]">
           {step === 'upload' ? (
             <Card>
@@ -335,7 +327,5 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
             </Card>
           )}
         </ScrollArea>
-      </DialogContent>
-    </Dialog>
   )
 }

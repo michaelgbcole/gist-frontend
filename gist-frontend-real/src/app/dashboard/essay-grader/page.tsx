@@ -34,10 +34,7 @@ export default function FileUploadDashboard() {
         <CardTitle>Essay Grading Dashboard</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-between">
-          <RubricMaker userId={user?.id ?? ''} />
           <FileUploadDialog userId={user?.id ?? ''} supabase={supabase} />
-        </div>
       </CardContent>
     </Card>
   )
