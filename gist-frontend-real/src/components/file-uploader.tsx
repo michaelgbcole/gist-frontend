@@ -162,6 +162,7 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
       if (criteriaFeedbackElement) {
         try {
           const feedbackJSON = JSON.parse(criteriaFeedbackElement.textContent?.replaceAll('[', '')?.replaceAll(']', '')?.slice(1, -1) || '[]')
+          console.log('feedbackJSON', feedbackJSON)
           setCriteriaFeedback(feedbackJSON)
         } catch (error) {
           console.error('Failed to parse criteriaFeedback:', error)
