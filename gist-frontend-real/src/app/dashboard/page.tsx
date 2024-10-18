@@ -54,6 +54,7 @@ function Dashboard() {
         <AuthWrapper>
             <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
                 <ResponsiveMenuBar />
+
                 <div className="flex flex-col items-center justify-center flex-grow">
                     <h1 className="text-3xl font-bold mb-8">Welcome to the Dashboard</h1>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">

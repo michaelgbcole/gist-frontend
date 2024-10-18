@@ -11,9 +11,17 @@ import FileUploadDialog from '@/components/file-uploader'
 import ResponsiveMenuBar from '@/components/nav-bar'
 import Footer from '@/components/footer'
 
+type PrismaUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  isPayer: boolean;
+};
 
 export default function FileUploadDashboard() {
   const [user, setUser] = useState<User | null>(null)
+  const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
+
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +33,12 @@ export default function FileUploadDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setUser(user)
+        const response = await fetch(`/api/user-data/${user.id}`);
+        if (response.ok) {
+            const userData: PrismaUser = await response.json();
+            setPrismaUser(userData);
+            // Fetch user's forms
+        }
       }
     }
     getUser()
