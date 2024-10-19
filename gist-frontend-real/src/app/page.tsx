@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { useSpring, animated } from 'react-spring'
 import { ChevronRight, CheckCircle, Book, Brain, Clock, Star, BarChart } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import NavBar from '@/components/nav-bar'
