@@ -8,6 +8,7 @@ import { Loader2, Upload, File, ChevronUp, ChevronDown } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { parse } from 'path'
 
 type FileInfo = {
   name: string
@@ -43,8 +44,7 @@ interface FileUploadDialogProps {
 export default function FileUploadDialog({ userId, supabase }: FileUploadDialogProps) {
   const [files, setFiles] = useState<FileInfo[]>([])
   const [rubrics, setRubrics] = useState<Rubric[]>([])
-  const [selectedFile, setSelectedFile] = useState<FileInfo | null>(null)
-  const [selectedRubric, setSelectedRubric] = useState<Rubric | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]); const [selectedRubric, setSelectedRubric] = useState<Rubric | null>(null)
   const [uploading, setUploading] = useState(false)
   const [gradingResult, setGradingResult] = useState<string | null>(null)
   const [parsedResult, setParsedResult] = useState<XMLDocument | null>(null)
@@ -60,6 +60,8 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
       fetchRubrics(userId)
     }
   }, [userId])
+
+
 
   const fetchFiles = async (userId: string) => {
     try {
@@ -123,9 +125,14 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
   }
 
   const handleFileSelect = (file: FileInfo) => {
-    setSelectedFile(file)
-    setStep('select')
-  }
+    setSelectedFiles((prevSelectedFiles) => {
+      if (prevSelectedFiles.includes(file)) {
+        return prevSelectedFiles.filter((f) => f !== file);
+      } else {
+        return [...prevSelectedFiles, file];
+      }
+    });
+  };
 
   const handleRubricSelect = (rubricId: string) => {
     const selected = rubrics.find(rubric => rubric.id === rubricId) || null
@@ -133,201 +140,223 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
   }
 
   const handleGrade = async () => {
-    if (!selectedFile || !selectedRubric) return
-    const parser = new DOMParser()
-    setGrading(true)
-    setGradingResult(null)
-    setCriteriaFeedback([])
-    setShowMore(false)
+    if (selectedFiles.length === 0 || !selectedRubric) return;
+    const parser = new DOMParser();
+    setGrading(true);
+    setGradingResult(null);
+    setCriteriaFeedback([]);
+    setShowMore(false);
+  
     try {
-      const response = await fetch('/api/grade-essay', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pdfUrl: selectedFile.url,
-          rubricId: selectedRubric.id,
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to grade essay')
-
-      const result = await response.json()
-      const parsedResult = parser.parseFromString(JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll('\\', ''), 'text/xml')
-      setParsedResult(parsedResult)
-
-      const criteriaFeedbackElement = parsedResult.getElementsByTagName('criteriaFeedback')[0]
-      
-      if (criteriaFeedbackElement) {
-        try {
-          const feedbackJSON = JSON.parse(criteriaFeedbackElement.textContent?.replaceAll('[', '')?.replaceAll(']', '')?.slice(1, -1) || '[]')
-          console.log('feedbackJSON', feedbackJSON)
-          setCriteriaFeedback(feedbackJSON)
-        } catch (error) {
-          console.error('Failed to parse criteriaFeedback:', error)
+      for (const file of selectedFiles) {
+        const response = await fetch('/api/grade-essay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            pdfUrl: file.url,
+            rubricId: selectedRubric.id,
+          }),
+        });
+  
+        if (!response.ok) throw new Error('Failed to grade essay');
+  
+        const result = await response.json();
+        const cleanText = JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll('\\', '');
+        const parsedResult = parser.parseFromString(cleanText, 'text/xml');
+        setParsedResult(parsedResult);
+  
+        const criteriaFeedbackElement = parsedResult.getElementsByTagName('criteriaFeedback')[0];
+        if (criteriaFeedbackElement) {
+          const feedbackJSON = JSON.parse(criteriaFeedbackElement.textContent?.replaceAll('[', '')?.replaceAll(']', '')?.slice(1, -1) || '[]');
+          setCriteriaFeedback(feedbackJSON);
+  
+          const uploadGrade = await fetch(`/api/upload-grade`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              rubricId: selectedRubric.id,
+              score: parsedResult.getElementsByTagName('finalScore')[0].textContent,
+              fileName: file.name,
+              feedback: parsedResult.getElementsByTagName('overallFeedback')[0].textContent,
+              rubricData: feedbackJSON
+            })
+          });
+  
+          if (!uploadGrade.ok) throw new Error('Failed to upload grade');
         }
       }
-
+  
       toast({
         title: "Success",
-        description: "Essay graded successfully",
-      })
+        description: "Essays graded successfully",
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to grade essay",
+        description: "Failed to grade essays",
         variant: "destructive",
-      })
+      });
     } finally {
-      setGrading(false)
+      setGrading(false);
     }
-  }
+  };
 
   return (
-        <ScrollArea  className="h-[60vh]">
-          {step === 'upload' ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>File Upload</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                    className="flex-grow"
-                  />
-                  <Button onClick={() => document.getElementById('file-upload')?.click()} disabled={uploading}>
-                    {uploading ? (
+    <ScrollArea className="h-[60vh]">
+      {step === 'upload' ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>File Upload</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                id="file-upload"
+                type="file"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="flex-grow"
+              />
+              <Button onClick={() => document.getElementById('file-upload')?.click()} disabled={uploading}>
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Your Files</h3>
+              {files.length === 0 ? (
+                <p>No files uploaded yet.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>File Name</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {files.map((file, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="flex items-center">
+                          <File className="mr-2 h-4 w-4" />
+                          {file.name}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant={selectedFiles.includes(file) ? "default" : "outline"}
+                            onClick={() => handleFileSelect(file)}
+                          >
+                            {selectedFiles.includes(file) ? "Deselect" : "Select"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+            <Button onClick={() => setStep('select')} disabled={selectedFiles.length === 0}>
+              Next
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Grade Essay</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select onValueChange={(value) => handleRubricSelect(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a rubric" />
+              </SelectTrigger>
+              <SelectContent>
+                {rubrics.map((rubric) => (
+                  <SelectItem key={rubric.id} value={rubric.id}>
+                    {rubric.rubricJSON?.title ?? ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleGrade} disabled={!selectedRubric || grading} className="w-full">
+              {grading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Grading...
+                </>
+              ) : (
+                'Grade'
+              )}
+            </Button>
+            {parsedResult && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Grading Result</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p><strong>Final Score:</strong> {parsedResult?.getElementsByTagName('finalScore')[0].textContent}</p>
+                  <p><strong>Overall Feedback:</strong> {parsedResult?.getElementsByTagName('overallFeedback')[0].textContent}</p>
+                  <Button
+                    onClick={() => setShowMore(!showMore)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {showMore ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Uploading...
+                        Show Less <ChevronUp className="ml-2 h-4 w-4" />
                       </>
                     ) : (
                       <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
+                        Show More <ChevronDown className="ml-2 h-4 w-4" />
                       </>
                     )}
                   </Button>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Your Files</h3>
-                  {files.length === 0 ? (
-                    <p>No files uploaded yet.</p>
-                  ) : (
+                  {showMore && (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>File Name</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead>Criteria</TableHead>
+                          <TableHead>Feedback</TableHead>
+                          <TableHead>Score</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {files.map((file, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="flex items-center">
-                              <File className="mr-2 h-4 w-4" />
-                              {file.name}
-                            </TableCell>
-                            <TableCell>
-                              <Button onClick={() => handleFileSelect(file)} size="sm">Select</Button>
-                            </TableCell>
+                        {criteriaFeedback && Object.entries(criteriaFeedback).map(([criterion, feedback]) => (
+                          <TableRow key={criterion}>
+                            <TableCell>{criterion}</TableCell>
+                            <TableCell>{feedback.feedback}</TableCell>
+                            <TableCell>{feedback.score}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Grade Essay</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p>Selected File: {selectedFile?.name}</p>
-                <Select onValueChange={(value) => handleRubricSelect(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a rubric" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {rubrics.map((rubric) => (
-                      <SelectItem key={rubric.id} value={rubric.id}>
-                        {rubric.rubricJSON?.title ?? ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleGrade} disabled={!selectedRubric || grading} className="w-full">
-                  {grading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Grading...
-                    </>
-                  ) : (
-                    'Grade'
-                  )}
-                </Button>
-                {parsedResult && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Grading Result</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <p><strong>Final Score:</strong> {parsedResult?.getElementsByTagName('finalScore')[0].textContent}</p>
-                      <p><strong>Overall Feedback:</strong> {parsedResult?.getElementsByTagName('overallFeedback')[0].textContent}</p>
-                      <Button
-                        onClick={() => setShowMore(!showMore)}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        {showMore ? (
-                          <>
-                            Show Less <ChevronUp className="ml-2 h-4 w-4" />
-                          </>
-                        ) : (
-                          <>
-                            Show More <ChevronDown className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                      {showMore && (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Criteria</TableHead>
-                              <TableHead>Feedback</TableHead>
-                              <TableHead>Score</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {criteriaFeedback && Object.entries(criteriaFeedback).map(([criterion, feedback]) => (
-                              <TableRow key={criterion}>
-                                <TableCell>{criterion}</TableCell>
-                                <TableCell>{feedback.feedback}</TableCell>
-                                <TableCell>{feedback.score}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-                <Button onClick={() => {
-                  setStep('upload')
-                  setGradingResult(null)
-                  setSelectedFile(null)
-                  setSelectedRubric(null)
-                }} variant="outline" className="w-full">Back</Button>
-              </CardContent>
-            </Card>
-          )}
-        </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+            <Button onClick={() => {
+              setStep('upload')
+              setGradingResult(null)
+              setSelectedFiles([])
+              setSelectedRubric(null)
+            }} variant="outline" className="w-full">Back</Button>
+          </CardContent>
+        </Card>
+      )}
+    </ScrollArea>
   )
 }

@@ -56,7 +56,7 @@ function Dashboard() {
                 <ResponsiveMenuBar />
 
                 <div className="flex flex-col items-center justify-center flex-grow">
-                    <h1 className="text-3xl font-bold mb-8">Welcome to the Dashboard</h1>
+                    <h1 className="text-3xl font-bold mb-8 text-white">Welcome to the Dashboard</h1>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                         <Link href="/dashboard/quizzes" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center transition-colors duration-300">
                             <FaClipboardCheck className="mr-2" />

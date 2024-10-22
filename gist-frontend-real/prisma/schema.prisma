@@ -58,3 +58,13 @@ model Rubric {
   userId String
   rubricJSON Json //json in sql lets fucking go
 }
+
+model Grade {
+  id Int @id @default(autoincrement())
+  userId String
+  rubricId Int
+  feedback String
+  score String
+  fileName String
+  rubricData Json
+}

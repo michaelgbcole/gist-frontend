@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { User } from '@supabase/supabase-js'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from 'next/dynamic'
 import RubricMaker from '@/components/rubric-creator'
 import FileUploadDialog from '@/components/file-uploader'
@@ -52,6 +52,8 @@ export default function FileUploadDashboard() {
         <Card className="w-full max-w-4xl mx-auto mt-10">
           <CardHeader>
             <CardTitle>Essay Grading Dashboard</CardTitle>
+            <CardTitle>Welcome, {prismaUser?.name ?? 'User'}</CardTitle>
+            <CardDescription>Upload essays to grade</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FileUploadDialog userId={user?.id ?? ''} supabase={supabase} />
