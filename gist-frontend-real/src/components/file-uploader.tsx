@@ -187,7 +187,7 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
             })
           });
   
-          if (!uploadGrade.ok) throw new Error('Failed to upload grade');
+          if (!uploadGrade.ok) throw new Error('Failed to upload grade xD');
         }
       }
   
