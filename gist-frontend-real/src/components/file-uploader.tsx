@@ -163,8 +163,9 @@ export default function FileUploadDialog({ userId, supabase }: FileUploadDialogP
         if (!response.ok) throw new Error('Failed to grade essay');
   
         const result = await response.json();
-        const cleanText = JSON.stringify(result?.results)?.slice(1, -1)?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll('\\', '');
-        const parsedResult = parser.parseFromString(cleanText, 'text/xml');
+        console.log('result', result?.results)
+        const parsedResult = parser.parseFromString(result?.results, 'text/xml');
+        console.log('parsedResult', parsedResult)
         setParsedResult(parsedResult);
   
         const criteriaFeedbackElement = parsedResult.getElementsByTagName('criteriaFeedback')[0];

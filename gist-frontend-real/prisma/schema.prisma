@@ -68,3 +68,11 @@ model Grade {
   fileName String
   rubricData Json
 }
+
+model Batch {
+  id Int @id @default(autoincrement())
+  userId String
+  name String
+  rubricId Int
+  fileUrls String[]
+}
