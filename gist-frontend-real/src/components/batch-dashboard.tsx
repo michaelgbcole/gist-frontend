@@ -16,7 +16,7 @@ const BatchDashboard: React.FC = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const response = await fetch('/api/get-batch');
+        const response = await fetch('/api/get-batchs');
         if (!response.ok) {
           throw new Error('Failed to fetch batches');
         }

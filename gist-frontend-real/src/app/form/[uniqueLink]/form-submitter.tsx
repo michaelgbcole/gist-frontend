@@ -96,7 +96,7 @@ export default function FormSubmissionContent({ user }: { user: User }) {
         acc[result.questionId] = result.isCorrect
         return acc
       }, {} as Record<string, boolean>)
-      const percentage = results.score
+      const percentage = results.score as number
       setPercentage(percentage)
       setCorrectness(newCorrectness)
       setIsSubmitted(true)
@@ -135,7 +135,7 @@ export default function FormSubmissionContent({ user }: { user: User }) {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-6xl sm:text-8xl font-bold text-blue-500"
             >
-              {percentage}%
+              {percentage.toFixed(2)}%
             </motion.div>
           </motion.div>
         </main>
