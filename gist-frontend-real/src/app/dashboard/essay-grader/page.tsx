@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import BatchCreator from '@/components/batch-creator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import RubricMaker from '@/components/rubric-creator';
 
 type PrismaUser = {
   id: string;
@@ -47,10 +48,15 @@ function Dashboard() {
     setShowBatchCreator(true);
   };
 
+  const handleCloseBatchCreator = () => {
+    setShowBatchCreator(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
       <ResponsiveMenuBar />
       <div className="flex flex-col items-center justify-center flex-grow">
+        <RubricMaker userId={user?.id ?? ''} />
         {!showBatchCreator && (
           <>
             <Button onClick={() => setIsDialogOpen(true)}>
@@ -73,7 +79,7 @@ function Dashboard() {
             </Dialog>
           </>
         )}
-        {showBatchCreator && <BatchCreator supabase={supabase} userId={user?.id ?? ''} name={batchName} />}
+        {showBatchCreator && <BatchCreator supabase={supabase} userId={user?.id ?? ''} name={batchName} onClose={handleCloseBatchCreator} />}
       </div>
       <Footer />
     </div>
