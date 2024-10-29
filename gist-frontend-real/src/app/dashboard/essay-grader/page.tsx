@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import RubricMaker from '@/components/rubric-creator';
 import { Table } from '@/components/ui/table';
+import BatchDashboard from '@/components/batch-dashboard';
 
 type PrismaUser = {
   id: string;
@@ -81,6 +82,7 @@ function Dashboard() {
           </>
         )}
         {showBatchCreator && <BatchCreator supabase={supabase} userId={user?.id ?? ''} name={batchName} onClose={handleCloseBatchCreator} />}
+        <BatchDashboard userId={user?.id ?? ''} />
         
       </div>
       <Footer />

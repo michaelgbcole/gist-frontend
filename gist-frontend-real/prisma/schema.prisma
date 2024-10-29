@@ -75,5 +75,6 @@ model Batch {
   userId String
   name String
   rubricId Int
+  status String @default("pending")
   fileUrls String[]
 }

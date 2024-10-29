@@ -26,7 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const results = await gradeEssay(pdfUrl, JSON.stringify(rubric?.rubricJSON));
       const cleanText = results?.replaceAll("\\n", '')?.replaceAll('&', 'and')?.replaceAll('\\', '');
       const parsedResult = parser.parseFromString(cleanText, 'text/xml');
-
+      const fileName = pdfUrl.split('/').pop()?.split('.pdf')[0];
+      console.log('fileName:', fileName);
       console.log('results:', results);
       try {
         const grade = await prisma.grade.create({
@@ -34,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 userId: userId,
                 rubricId: rubricId,
                 score: parsedResult?.getElementsByTagName('finalScore')[0].textContent ?? '',
-                fileName: pdfUrl,
+                fileName: fileName,
                 feedback: parsedResult?.getElementsByTagName('overallFeedback')[0].textContent ?? '',
                 batchId: batchId,
                 rubricData: parsedResult?.getElementsByTagName('criteriaFeedback')[0].textContent ?? ''
