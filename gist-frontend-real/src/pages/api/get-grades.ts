@@ -19,12 +19,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           score: true,
           feedback: true,
           fileName: true,
+          rubricData: true,
         },
       });
 
       if (!grades) {
         return res.status(404).json({ error: 'Grades not found' });
       }
+      console.log(grades[0].rubricData);
 
       return res.status(200).json({ grades });
     } catch (error) {

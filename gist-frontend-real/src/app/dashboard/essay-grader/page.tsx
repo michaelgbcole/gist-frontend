@@ -57,33 +57,8 @@ function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
       <ResponsiveMenuBar />
-      <div className="flex flex-col items-center justify-center flex-grow">
-        <RubricMaker userId={user?.id ?? ''} />
-        {!showBatchCreator && (
-          <>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              Create A New Batch
-            </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enter Batch Name</DialogTitle>
-                </DialogHeader>
-                <Input
-                  value={batchName}
-                  onChange={(e) => setBatchName(e.target.value)}
-                  placeholder="Batch Name"
-                />
-                <Button onClick={handleBatchNameSubmit}>
-                  Submit
-                </Button>
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
-        {showBatchCreator && <BatchCreator supabase={supabase} userId={user?.id ?? ''} name={batchName} onClose={handleCloseBatchCreator} />}
-        <BatchDashboard userId={user?.id ?? ''} />
-        
+      <div className="flex flex-col flex-grow">
+        <BatchDashboard userId={user?.id ?? ''} supabase={supabase}/>
       </div>
       <Footer />
     </div>

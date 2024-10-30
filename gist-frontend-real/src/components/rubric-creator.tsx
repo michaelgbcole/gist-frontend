@@ -83,7 +83,7 @@ const RubricMaker: React.FC<RubricMakerProps> = ({ userId }) => {
         <DialogHeader>
           <DialogTitle>Rubric Maker</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto pr-4">
+        <div className="max-h-[60vh] items-center">
           <div className="mb-4">
             <Label htmlFor="rubric-title">Rubric Title</Label>
             <Input
