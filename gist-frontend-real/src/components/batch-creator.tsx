@@ -83,19 +83,21 @@ const BatchCreator: React.FC<BatchCreatorProps> = ({ userId, supabase, name: bat
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files || !event.target.files[0] || !userId) return;
-    const file = event.target.files[0];
+    if (!event.target.files || event.target.files.length === 0 || !userId) return;
+    const files = Array.from(event.target.files);
     setUploading(true);
     try {
-      const { data, error } = await supabase.storage
-        .from('essays')
-        .upload(`${userId}/${batchName}/${file.name}`, file);
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "File uploaded successfully",
-      });
-      console.log('data', data);
+      for (const file of files) {
+        const { data, error } = await supabase.storage
+          .from('essays')
+          .upload(`${userId}/${batchName}/${file.name}`, file);
+        if (error) throw error;
+        toast({
+          title: "Success",
+          description: `File ${file.name} uploaded successfully`,
+        });
+        console.log('data', data);
+      }
       await fetchFiles(userId, batchName); // Fetch files again to update the list and auto-select
     } catch (error) {
       toast({
@@ -107,6 +109,7 @@ const BatchCreator: React.FC<BatchCreatorProps> = ({ userId, supabase, name: bat
       setUploading(false);
     }
   };
+
 
   const handleRubricSelect = (rubricId: string) => {
     const selected = rubrics.find(rubric => rubric.id === rubricId) || null;
@@ -148,6 +151,7 @@ const BatchCreator: React.FC<BatchCreatorProps> = ({ userId, supabase, name: bat
               type="file"
               onChange={handleFileUpload}
               disabled={uploading}
+              multiple
               className="flex-grow"
             />
             <Button onClick={() => document.getElementById('file-upload')?.click()} disabled={uploading || batchName === ''}>
