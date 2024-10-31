@@ -40,7 +40,6 @@ model UserData {
   formIds            Int[]
   isPayer            Boolean      @default(false)
   stripe_customer_id String?
-  role               String       @default("student")
 }
 
 model Submission {

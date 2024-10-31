@@ -7,7 +7,6 @@ export async function GET(request: Request) {
   console.log(requestUrl)
   const code = requestUrl.searchParams.get('code')
   const isSignUp = requestUrl.searchParams.get('isSignUp') === 'true'
-  const role = requestUrl.searchParams.get('role')
   console.log('isSignUp:', isSignUp)
   console.log('requesturl.origin:', requestUrl.origin)
 
@@ -36,8 +35,8 @@ export async function GET(request: Request) {
     console.log('callback data', requestUrl.origin, 'isSignup', isSignUp, data)
 
     if (!error && data?.user) {
-      if (isSignUp) {
         // Create user in Prisma database
+        console.log('datatype', data)
         try {
           const response = await fetch(`${requestUrl.origin}/api/create-user`, {
             method: 'POST',
@@ -48,7 +47,7 @@ export async function GET(request: Request) {
               id: data.user.id,
               email: data.user.email,
               name: data.user.user_metadata.full_name,
-              role: role,
+                        
             }),
           })
           
@@ -58,7 +57,7 @@ export async function GET(request: Request) {
         } catch (error) {
           console.error('Error creating user:', error)
         }
-      }
+      
     }
   }
 

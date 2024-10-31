@@ -135,16 +135,16 @@ const BatchCreator: React.FC<BatchCreatorProps> = ({ userId, supabase, name: bat
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-    <DialogContent>
+    <DialogContent className=''>
       <DialogHeader>
         <DialogTitle>Batch Creator</DialogTitle>
       </DialogHeader>
-    <ScrollArea className="h-[60vh]">
+    <ScrollArea>
       <Card>
         <CardHeader>
           <CardTitle>Batch Creator</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 ">
           <div className="flex items-center space-x-2">
             <Input
               id="file-upload"
