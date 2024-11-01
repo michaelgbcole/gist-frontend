@@ -165,7 +165,9 @@ export default function FormSubmissionContent({ user }: { user: User }) {
             </motion.div>
           )}
           <AnimatePresence>
-            {questions.map((question, index) => (
+            {questions
+              .filter((question) => question.question)
+              .map((question, index) => (
               <motion.div
                 key={question.id}
                 initial={{ opacity: 0, y: 50 }}
@@ -175,14 +177,14 @@ export default function FormSubmissionContent({ user }: { user: User }) {
                 className="mb-8 bg-gray-800 rounded-lg p-6 shadow-lg"
               >
                 {question.type === 'SAQ' ? (
-                  <SAQTest 
-                    id={question.id} 
-                    onAnswerChange={(answer) => handleAnswerChange(question.id, answer)} 
+                  <SAQTest
+                    id={question.id}
+                    onAnswerChange={(answer) => handleAnswerChange(question.id, answer)}
                   />
                 ) : (
-                  <MultipleChoiceTest 
-                    id={question.id} 
-                    onSelectionChange={(indices) => handleSelectionChange(question.id, indices)} 
+                  <MultipleChoiceTest
+                    id={question.id}
+                    onSelectionChange={(indices) => handleSelectionChange(question.id, indices)}
                   />
                 )}
               </motion.div>
