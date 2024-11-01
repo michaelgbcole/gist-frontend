@@ -39,9 +39,10 @@ type PrismaUser = {
 type BatchDashboardProps = {
   userId: string;
   supabase: any;
+  canCreateBatch: boolean;
 };
 
-const BatchDashboard: React.FC<BatchDashboardProps> = ({ userId, supabase }) => {
+const BatchDashboard: React.FC<BatchDashboardProps> = ({ userId, supabase, canCreateBatch }) => {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +150,7 @@ const BatchDashboard: React.FC<BatchDashboardProps> = ({ userId, supabase }) => 
             </Select>
             <RubricMaker userId={userId} />
 
-        {!showBatchCreator && (
+        {!showBatchCreator && canCreateBatch&& (
           <>
             <Button onClick={() => setIsDialogOpen(true)}>
               Create A New Batch
@@ -172,7 +173,7 @@ const BatchDashboard: React.FC<BatchDashboardProps> = ({ userId, supabase }) => 
             
           </>
         )}
-        {showBatchCreator && <BatchCreator supabase={supabase} userId={userId} name={batchName} onClose={handleCloseBatchCreator} />}
+        {showBatchCreator && canCreateBatch && <BatchCreator supabase={supabase} userId={userId} name={batchName} onClose={handleCloseBatchCreator} />}
         </div>
             {selectedBatchId && (
               <Table>
