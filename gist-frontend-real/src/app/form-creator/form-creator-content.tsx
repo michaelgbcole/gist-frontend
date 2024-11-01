@@ -78,7 +78,7 @@ export default function FormCreatorContent({ user }: { user: User }) {
 
       if (response.ok) {
         const data = await response.json()
-        window.location.href = '/dashboard'
+        window.location.href = '/dashboard/quizzes'
       } else {
         setErrorMessage('Failed to publish the form. Make sure you are not exceeding the limit!')
         console.error('Error publishing:', await response.json())
