@@ -7,6 +7,7 @@ import Footer from '@/components/footer'
 import SAQ from '@/components/saq-question-edit'
 import MultipleChoice from '@/components/mc-question-edit'
 import { User } from '@supabase/supabase-js'
+import { Button } from '@/components/ui/button';
 
 interface Question {
   id: number
@@ -132,14 +133,12 @@ export default function FormCreatorContent({ user }: { user: User }) {
                   placeholder="Enter title here"
                   className="text-3xl sm:text-5xl font-bold mb-4 bg-transparent border-b-2 border-blue-500 text-center w-full focus:outline-none"
                 />
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                <Button
                   onClick={handleTitleSubmit}
                   className="absolute right-0 top-1/2 transform -translate-y-1/2 text-blue-500"
                 >
                   <Check size={24} />
-                </motion.button>
+                </Button>
               </motion.div>
             ) : (
               <motion.div
@@ -149,14 +148,12 @@ export default function FormCreatorContent({ user }: { user: User }) {
                 className="relative group"
               >
                 <h1 className="text-3xl sm:text-5xl font-bold mb-4">{title}</h1>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                <button
                   onClick={() => setIsEditingTitle(true)}
                   className="absolute -right-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500"
                 >
                   <Edit3 size={20} />
-                </motion.button>
+                </button>
               </motion.div>
             )}
           </div>
@@ -175,14 +172,6 @@ export default function FormCreatorContent({ user }: { user: User }) {
                 ) : (
                   <MultipleChoice id={question.id} onUpdate={handleMCUpdate} onDeleteQuestion={deleteQuestion} />
                 )}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => deleteQuestion(question.id)}
-                  className="absolute top-2 right-2 text-red-500"
-                >
-                  <X size={20} />
-                </motion.button>
               </motion.div>
             ))}
           </AnimatePresence>

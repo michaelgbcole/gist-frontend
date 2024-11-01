@@ -65,7 +65,7 @@ const SAQEdit: React.FC<SAQProps> = ({
                whileHover={{ scale: 1.1 }}
                whileTap={{ scale: 0.9 }}
                onClick={handleDelete}
-               className="ml-2 text-red-500"
+               className="text-red-500"
              >
                <X size={20} />
              </motion.button>
