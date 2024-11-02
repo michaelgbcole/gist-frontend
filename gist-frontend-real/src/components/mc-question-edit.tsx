@@ -96,10 +96,8 @@ const MultipleChoiceEdit: React.FC<MultipleChoiceProps> = ({
          </div>
        </div>
             {options.map((option, index) => (
-              <div className='pb-2'>
               <div key={index} className="text-white border border-gray-300 p-2 rounded w-full text-left">
                 {option} {correctOptions.includes(index) && '(Correct)'}
-              </div>
               </div>
             ))}
         </>
