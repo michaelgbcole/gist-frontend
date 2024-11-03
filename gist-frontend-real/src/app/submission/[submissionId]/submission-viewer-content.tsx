@@ -34,7 +34,7 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
   const router = useRouter()
   const submissionId = params?.submissionId as string | undefined
 
-  const [questions, setQuestions] = useState<Question[]>([])
+  const [questions, setQuestions] = useState<any[]>([])
   const [submission, setSubmission] = useState<SubmissionData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,45 +44,46 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
     }
   }, [submissionId])
 
-  async function fetchSubmission(id: string) {
-    try {
-      const response = await fetch(`/api/get-submission?id=${id}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch submission')
-      }
-      const data = await response.json()
-      setSubmission(data.submission)
-      const questionPromises = data.submission.answers.map((answer: { questionId: number }) =>
-        fetchQuestion(answer.questionId)
-      )
-      await Promise.all(questionPromises)
-    } catch (error) {
-      console.error('Error fetching submission:', error)
-      setError('Failed to load the submission. Please try again later.')
+  
+async function fetchSubmission(id: string) {
+  try {
+    const response = await fetch(`/api/get-submission?id=${id}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch submission')
     }
+    const data = await response.json()
+    setSubmission(data.submission)
+    const questionPromises = data.submission.answers.map((answer: { questionId: number }) =>
+      fetchQuestion(answer.questionId)
+    )
+    await Promise.all(questionPromises)
+  } catch (error) {
+    console.error('Error fetching submission:', error)
+    setError('Failed to load the submission. Please try again later.')
   }
+}
 
-  async function fetchQuestion(id: number) {
-    try {
-      const response = await fetch(`/api/get-question`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      })
-      if (!response.ok) {
-        throw new Error('Failed to fetch question')
-      }
-      const data = await response.json()
-      console.log('data:', data.question)
-      setQuestions((prevQuestions) => [...prevQuestions, {id, question: data.question}])
-      return data
-    } catch (error) {
-      console.error('Error fetching question:', error)
-      return null
+async function fetchQuestion(id: number) {
+  try {
+    const response = await fetch(`/api/get-question`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id }),
+    })
+    if (!response.ok) {
+      throw new Error('Failed to fetch question')
     }
+    const data = await response.json()
+    setQuestions((prevQuestions) => [...prevQuestions, { id, question: data.question }])
+    console.log(questions, 'data')
+    return data
+  } catch (error) {
+    console.error('Error fetching question:', error)
+    return null
   }
+}
 
   if (error) {
     return (
@@ -136,23 +137,26 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
             <p>Submitted on: {new Date(submission.createdAt).toLocaleString()}</p>
           </div>
           {submission.answers.map((answer, index) => {
-            const question = questions.find(q => q.id === answer.questionId)
-            return (
-            <motion.div
-              key={answer.questionId}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="mb-6 bg-gray-800 rounded-lg p-6 shadow-lg"
-            >
-              <h3 className="text-xl font-bold mb-2">{question?.question}</h3>
-              <p className="mb-2">Answer: {Array.isArray(answer.answerData) ? answer.answerData.join(', ') : answer.answerData}</p>
-              <p className={`font-bold ${answer.isCorrect ? 'text-green-500' : 'text-red-500'}`}>
-                {answer.isCorrect ? 'Correct' : 'Incorrect'}
-              </p>
-            </motion.div>
-            )
-          })}
+            console.log(answer.questionId, 'answer')
+
+    const question = questions.find(q => q.id === answer.questionId)
+    console.log(question, 'qieuwioq')
+    return (
+      <motion.div
+        key={answer.questionId}
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.1 }}
+        className="mb-6 bg-gray-800 rounded-lg p-6 shadow-lg"
+      >
+        <h3 className="text-xl font-bold mb-2">{question?.question?.question}</h3>
+        <p className="mb-2">Answer: {Array.isArray(answer.answerData) ? answer.answerData.join(', ') : answer.answerData}</p>
+        <p className={`font-bold ${answer.isCorrect ? 'text-green-500' : 'text-red-500'}`}>
+          {answer.isCorrect ? 'Correct' : 'Incorrect'}
+        </p>
+      </motion.div>
+    )
+  })}
         </motion.div>
       </main>
       <Footer />
