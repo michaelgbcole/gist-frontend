@@ -24,11 +24,17 @@ interface SubmissionData {
   createdAt: string;
 }
 
+type Question = {
+  id: number;
+  question: string;
+}
+
 export default function SubmissionViewerContent({ user }: { user: User }) {
   const params = useParams()
   const router = useRouter()
   const submissionId = params?.submissionId as string | undefined
 
+  const [questions, setQuestions] = useState<Question[]>([])
   const [submission, setSubmission] = useState<SubmissionData | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,9 +52,35 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
       }
       const data = await response.json()
       setSubmission(data.submission)
+      const questionPromises = data.submission.answers.map((answer: { questionId: number }) =>
+        fetchQuestion(answer.questionId)
+      )
+      await Promise.all(questionPromises)
     } catch (error) {
       console.error('Error fetching submission:', error)
       setError('Failed to load the submission. Please try again later.')
+    }
+  }
+
+  async function fetchQuestion(id: number) {
+    try {
+      const response = await fetch(`/api/get-question`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to fetch question')
+      }
+      const data = await response.json()
+      console.log('data:', data.question)
+      setQuestions((prevQuestions) => [...prevQuestions, {id, question: data.question}])
+      return data
+    } catch (error) {
+      console.error('Error fetching question:', error)
+      return null
     }
   }
 
@@ -103,7 +135,9 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
             <h2 className="text-2xl font-bold mb-4">Score: {submission.score}%</h2>
             <p>Submitted on: {new Date(submission.createdAt).toLocaleString()}</p>
           </div>
-          {submission.answers.map((answer, index) => (
+          {submission.answers.map((answer, index) => {
+            const question = questions.find(q => q.id === answer.questionId)
+            return (
             <motion.div
               key={answer.questionId}
               initial={{ opacity: 0, y: 50 }}
@@ -111,13 +145,14 @@ export default function SubmissionViewerContent({ user }: { user: User }) {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="mb-6 bg-gray-800 rounded-lg p-6 shadow-lg"
             >
-              <h3 className="text-xl font-bold mb-2">Question {index + 1}</h3>
+              <h3 className="text-xl font-bold mb-2">{question?.question}</h3>
               <p className="mb-2">Answer: {Array.isArray(answer.answerData) ? answer.answerData.join(', ') : answer.answerData}</p>
               <p className={`font-bold ${answer.isCorrect ? 'text-green-500' : 'text-red-500'}`}>
                 {answer.isCorrect ? 'Correct' : 'Incorrect'}
               </p>
             </motion.div>
-          ))}
+            )
+          })}
         </motion.div>
       </main>
       <Footer />
