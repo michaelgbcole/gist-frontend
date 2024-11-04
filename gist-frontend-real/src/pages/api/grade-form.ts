@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (question.type === 'SAQ' && typedAnswer !== undefined) {
           // For SAQ, compare the typed answer with the correct answer (assuming gist is the correct answer)
           const response = await generateGrade(question?.gist ?? '', typedAnswer);
-          isCorrect = !response?.includes('Incorrect');
+          isCorrect = !response?.includes('Incorrect') || !response?.includes('incorrect');
         } else if (question.type === 'MultipleChoice' && selectedAnswers !== undefined) {
           // For MultipleChoice, compare the selected answers with the correct options
           isCorrect = JSON.stringify(question.correctOptions) === JSON.stringify(selectedAnswers);
