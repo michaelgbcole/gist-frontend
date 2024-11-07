@@ -114,7 +114,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
       <ResponsiveMenuBar />
-      {!prismaUser?.isPayer && (
+      {prismaUser?.isPayer == false && (
                 <div className="bg-yellow-500 text-black p-4 text-center">
                     You are on the trial version of Gist. You have {remainingBatchs} batch{remainingBatchs === 1 ? '' : 's'} left. <button onClick={handleUpgrade} className="underline">Click here to upgrade</button>.
                 </div>

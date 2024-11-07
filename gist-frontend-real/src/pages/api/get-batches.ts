@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { userId } = req.query;
+    const { userId } = req.body;
     console.log('userId', userId)
     try {
       // Fetch the form data using the unique link
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           status: true,
         },
       });
-      console.log(batches)
+
 
       if (!batches) {
         return res.status(404).json({ error: 'Form not found' });
