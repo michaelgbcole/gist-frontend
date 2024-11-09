@@ -179,7 +179,7 @@ export default function FormCreatorContent({ user }: { user: User }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="fixed bottom-8 right-8 flex flex-col items-end space-y-4"
+            className="flex flex-col items-center space-y-4"
           >
             <motion.button
               whileHover={{ scale: 1.1 }}

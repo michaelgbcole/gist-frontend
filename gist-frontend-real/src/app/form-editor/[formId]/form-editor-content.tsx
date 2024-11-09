@@ -31,7 +31,7 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isError, setIsError] = useState(false)
-
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (formId) {
@@ -75,6 +75,7 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
       console.error('Invalid form ID')
       return
     }
+    setIsSaving(true)
 
     try {
       const response = await fetch('/api/update-form', {
@@ -91,7 +92,7 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
       })
 
       if (response.ok) {
-        alert('Form saved successfully!')
+        setIsSaving(false)
         router.push('/dashboard/quizzes') // Redirect to dashboard after saving
       } else {
         console.error('Error saving form:', await response.json())
@@ -213,23 +214,18 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
                     initialCorrectOptions={question.correctOptions}
                   />
                 )}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => deleteQuestion(question.id)}
-                  className="absolute top-2 right-2 text-red-500"
-                >
-                  <X size={20} />
-                </motion.button>
+                
+                
               </motion.div>
             ))}
           </AnimatePresence>
 
-          <motion.div
+
+         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="fixed bottom-8 right-8 flex flex-col items-end space-y-4"
+            className="flex flex-col items-center space-y-4"
           >
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -246,7 +242,7 @@ export default function FormEditorContent({ user, formId }: FormEditorContentPro
               className="bg-green-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center"
             >
               <Save size={20} className="mr-2" />
-              Save Changes
+              {isSaving ? 'Saving...' : 'Save'}
             </motion.button>
           </motion.div>
         </motion.div>
