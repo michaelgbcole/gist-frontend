@@ -38,7 +38,7 @@ model UserData {
   email              String       @unique
   name               String?
   formIds            Int[]
-  isPayer            Boolean      @default(false)
+  isPayer            Boolean      @default(true)
   stripe_customer_id String?
 }
 
