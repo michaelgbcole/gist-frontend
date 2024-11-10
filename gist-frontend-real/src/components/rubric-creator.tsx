@@ -67,7 +67,7 @@ const RubricMaker: React.FC<RubricMakerProps> = ({ userId }) => {
       }
 
       alert('Rubric published successfully!');
-      setOpen(false); // Close the dialog after successful publish
+      setOpen(false);
     } catch (error) {
       console.error('Error publishing rubric:', error);
       alert('Failed to publish rubric. Please try again.');
@@ -79,65 +79,74 @@ const RubricMaker: React.FC<RubricMakerProps> = ({ userId }) => {
       <DialogTrigger asChild>
         <Button variant="outline">Create Rubric</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[700px] h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4">
           <DialogTitle>Rubric Maker</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[60vh] items-center">
-          <div className="mb-4">
-            <Label htmlFor="rubric-title">Rubric Title</Label>
-            <Input
-              id="rubric-title"
-              placeholder="Enter rubric title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mt-2"
-            />
-          </div>
-          {criteria.map((criterion, index) => (
-            <Card key={index} className="mb-4">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Input
-                    placeholder="Criterion name"
-                    value={criterion.name}
-                    onChange={(e) => updateCriterion(index, 'name', e.target.value)}
-                    className="flex-grow mr-2"
-                  />
-                  <div className="flex items-center">
-                    <Label htmlFor={`points-${index}`} className="mr-2">Points:</Label>
+        
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full px-6">
+            <div className="mb-4">
+              <Label htmlFor="rubric-title">Rubric Title</Label>
+              <Input
+                id="rubric-title"
+                placeholder="Enter rubric title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            
+            {criteria.map((criterion, index) => (
+              <Card key={index} className="mb-4">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between mb-2">
                     <Input
-                      id={`points-${index}`}
-                      type="number"
-                      min="0"
-                      value={criterion.points}
-                      onChange={(e) => updateCriterion(index, 'points', parseInt(e.target.value) || 0)}
-                      className="w-20 mr-2"
+                      placeholder="Criterion name"
+                      value={criterion.name}
+                      onChange={(e) => updateCriterion(index, 'name', e.target.value)}
+                      className="flex-grow mr-2"
                     />
-                    <Button variant="destructive" size="icon" onClick={() => removeCriterion(index)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center">
+                      <Label htmlFor={`points-${index}`} className="mr-2">Points:</Label>
+                      <Input
+                        id={`points-${index}`}
+                        type="number"
+                        min="0"
+                        value={criterion.points}
+                        onChange={(e) => updateCriterion(index, 'points', parseInt(e.target.value) || 0)}
+                        className="w-20 mr-2"
+                      />
+                      <Button variant="destructive" size="icon" onClick={() => removeCriterion(index)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-                <Textarea
-                  placeholder="Criterion description"
-                  value={criterion.description}
-                  onChange={(e) => updateCriterion(index, 'description', e.target.value)}
-                  className="w-full"
-                />
-              </CardContent>
-            </Card>
-          ))}
+                  <Textarea
+                    placeholder="Criterion description"
+                    value={criterion.description}
+                    onChange={(e) => updateCriterion(index, 'description', e.target.value)}
+                    className="w-full"
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </ScrollArea>
         </div>
-        <div className="flex justify-between items-center mt-4">
-          <Button onClick={addCriterion} variant="outline">
-            <Plus className="mr-2 h-4 w-4" /> Add Criterion
+
+        <div className="border-t p-6 space-y-4 mt-auto">
+          <div className="flex justify-between items-center">
+            <Button onClick={addCriterion} variant="outline">
+              <Plus className="mr-2 h-4 w-4" /> Add Criterion
+            </Button>
+            <div className="text-sm font-medium">
+              Total Points: {criteria.reduce((sum, criterion) => sum + criterion.points, 0)}
+            </div>
+          </div>
+          <Button onClick={handleConfirm} className="w-full">
+            <Save className="mr-2 h-4 w-4" /> Confirm Rubric
           </Button>
-          <div className="text-sm font-medium">Total Points: {criteria.reduce((sum, criterion) => sum + criterion.points, 0)}</div>
         </div>
-        <Button onClick={handleConfirm} className="w-full mt-4">
-          <Save className="mr-2 h-4 w-4" /> Confirm Rubric
-        </Button>
       </DialogContent>
     </Dialog>
   );
