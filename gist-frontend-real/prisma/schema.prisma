@@ -77,3 +77,12 @@ model Batch {
   status String @default("pending")
   fileUrls String[]
 }
+
+model Classroom {
+  id Int @id @default(autoincrement())
+  name String
+  teacherId String
+  formIds Int[]
+  batchIds Int[]
+  overallData String
+}
