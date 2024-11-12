@@ -2,8 +2,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import generateGrade from '@/util/quiz-grader';
+import { DOMParser } from 'xmldom';
+
 
 const prisma = new PrismaClient();
+
 
 interface Payload {
   questionId: string;
@@ -14,6 +17,7 @@ interface Payload {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const { payloads, user, uniqueLink } = req.body;
+    const parser = new DOMParser();
     console.log('payloads:', payloads);
     console.log('user:', user.id);
     console.log('uniqueLink:', uniqueLink);
@@ -42,7 +46,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (question.type === 'SAQ' && typedAnswer !== undefined) {
           // For SAQ, compare the typed answer with the correct answer (assuming gist is the correct answer)
           const response = await generateGrade(question?.gist ?? '', typedAnswer);
-          isCorrect = !response?.includes('Incorrect') || !response?.includes('incorrect');
+          console.log(response)
+          console.log(response.join(''))
+
+          const parsed=parser.parseFromString(response.join(''), 'text/html');
+          const responseText = parsed.documentElement.textContent;
+          const letext = parsed.getElementsByTagName('output')[0].textContent
+         isCorrect = !letext?.includes('incorrect')
+         console.log('response', response)
+         console.log('isCorrect', isCorrect)
         } else if (question.type === 'MultipleChoice' && selectedAnswers !== undefined) {
           // For MultipleChoice, compare the selected answers with the correct options
           isCorrect = JSON.stringify(question.correctOptions) === JSON.stringify(selectedAnswers);
