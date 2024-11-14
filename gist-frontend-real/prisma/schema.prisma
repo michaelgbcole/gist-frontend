@@ -14,6 +14,7 @@ model Form {
   questionIds Int[]
   creatorId   String
   uniqueLink  String @unique
+  overallFeedback String?
 }
 
 model Question {
@@ -51,12 +52,14 @@ model Submission {
   feedback       String?
   updatedAt  DateTime  @updatedAt
   score     Int
+  overallFeedback String?
 }
 
 model Rubric {
   id Int  @id @default(autoincrement())
   userId String
   rubricJSON Json //json in sql lets fucking go
+  overallFeedback String?
 }
 
 model Grade {
@@ -87,5 +90,5 @@ model Classroom {
   teacherId String
   formIds Int[]
   batchIds Int[]
-  overallData String?
+  overallFeedback String?
 }
