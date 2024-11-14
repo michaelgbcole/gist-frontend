@@ -48,6 +48,7 @@ model Submission {
   formId     Int
   answers    Json      
   createdAt  DateTime  @default(now())
+  feedback       String?
   updatedAt  DateTime  @updatedAt
   score     Int
 }
@@ -67,6 +68,7 @@ model Grade {
   fileName String
   batchId Int
   rubricData String
+  overall_feedback String?
 }
 
 model Batch {
@@ -76,6 +78,7 @@ model Batch {
   rubricId Int
   status String @default("pending")
   fileUrls String[]
+  overallFeedback String?
 }
 
 model Classroom {
@@ -84,5 +87,5 @@ model Classroom {
   teacherId String
   formIds Int[]
   batchIds Int[]
-  overallData String
+  overallData String?
 }
