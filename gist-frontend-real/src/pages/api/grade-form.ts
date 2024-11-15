@@ -23,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('uniqueLink:', uniqueLink);
 
     try {
+      const overallFeedback: string[] = [];
       const results = await Promise.all(payloads.map(async (payload: Payload) => {
         const { questionId, typedAnswer, selectedAnswers } = payload;
 
@@ -50,11 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           console.log(response.join(''))
 
           const parsed=parser.parseFromString(response.join(''), 'text/html');
-          const responseText = parsed.documentElement.textContent;
           const letext = parsed.getElementsByTagName('output')[0].textContent
          isCorrect = !letext?.includes('incorrect')
          console.log('response', response)
          console.log('isCorrect', isCorrect)
+         overallFeedback.push(parsed?.getElementsByTagName('thinking')[0].textContent ?? '')
         } else if (question.type === 'MultipleChoice' && selectedAnswers !== undefined) {
           // For MultipleChoice, compare the selected answers with the correct options
           isCorrect = JSON.stringify(question.correctOptions) === JSON.stringify(selectedAnswers);
@@ -80,6 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           formId: formId?.id ?? 0, // Ensure you have the formId available in your context
           answers: results,
           score: scorePercentage, // Add the score to the submission
+          overallFeedback: overallFeedback?.join('><')
         },
       });
 
