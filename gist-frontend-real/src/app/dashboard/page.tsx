@@ -1,77 +1,27 @@
 "use client";
-import { createBrowserClient } from '@supabase/ssr';
-import { User } from '@supabase/supabase-js';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { FaClipboardCheck, FaEdit } from 'react-icons/fa';
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import AuthWrapper from '@/components/AuthWrapper';
-import { useRouter } from 'next/dist/client/components/navigation';
-import ResponsiveMenuBar from '@/components/nav-bar';
-import Footer from '@/components/footer';
+import Frame from '@/components/new-ui/main-frame';
+import LineChart from '@/components/new-ui/charts/line-chart';
 
-type PrismaUser = {
-    id: string;
-    email: string;
-    name: string | null;
-    isPayer: boolean;
+const Dashboard = () => {
+  const data = [
+    { quarter: '1st quarter', average: 75 },
+    { quarter: '2nd quarter', average: 80 },
+    { quarter: '3rd quarter', average: 93 },
+    { quarter: '4th quarter', average: 87 }
+  ];
+
+  return (
+    <AuthWrapper>
+        <Frame>
+        <LineChart />
+    </Frame>
+    </AuthWrapper>
+  );
 };
-
-function Dashboard() {
-    const [user, setUser] = useState<User | null>(null);
-    const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUser(user);
-                // Fetch user data from Prisma
-                const response = await fetch(`/api/user-data/${user.id}`);
-                if (response.ok) {
-                    const userData: PrismaUser = await response.json();
-                    setPrismaUser(userData);
-                    // Fetch user's forms
-                }
-            } else {
-                router.push('/');
-            }
-            setLoading(false);
-        };
-        getUser();
-    }, [supabase, router]);
-
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
-    return (
-        <AuthWrapper>
-            <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
-                <ResponsiveMenuBar />
-
-                <div className="flex flex-col items-center justify-center flex-grow">
-                    <h1 className="text-3xl font-bold mb-8 text-white">Welcome to the Dashboard</h1>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                        <Link href="/dashboard/quizzes" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center transition-colors duration-300">
-                            <FaClipboardCheck className="mr-2" />
-                            Gist Quizzes
-                        </Link>
-                        <Link href="/dashboard/essay-grader" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg flex items-center justify-center transition-colors duration-300">
-                            <FaEdit className="mr-2" />
-                            Gist Essay Grader
-                        </Link>
-                    </div>
-                </div>
-                <Footer />
-            </div>
-        </AuthWrapper>
-    );
-}
 
 export default Dashboard;

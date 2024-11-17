@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { loadStripe } from '@stripe/stripe-js';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Frame from '@/components/new-ui/main-frame';
 
 type PrismaUser = {
     id: string;
@@ -297,6 +298,7 @@ const fetchSubmissions = async (formId: number) => {
     const remainingForms = 3 - forms.length;
 
     return (
+        <Frame>
         <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
             <ResponsiveMenuBar />
             {!prismaUser.isPayer && (
@@ -387,6 +389,7 @@ const fetchSubmissions = async (formId: number) => {
                 )}
             </Dialog>
         </div>
+        </Frame>
     );
 }
 
