@@ -154,7 +154,7 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                                             variant="ghost"
                                             className="flex items-center gap-3 h-[50px] px-4 bg-blue-50 rounded-lg hover:bg-blue-100"
                                         >
-                                            <Avatar className="h-10 w-10 bg-[#8b5dff]">
+                                            <Avatar className="h-10 w-10 bg-[#8b5dff]" >
                                                 <AvatarImage src={userImage} />
                                                 <AvatarFallback>MN</AvatarFallback>
                                             </Avatar>
@@ -174,7 +174,7 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                             </div>
                         </div>
                     </header>
-                    <main className="flex-grow bg-slate-800">
+                    <main className="flex-grow">
                         {children}
                     </main>
                 </div>

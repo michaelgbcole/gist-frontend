@@ -1,16 +1,35 @@
 import { pdfjs } from "react-pdf";
 import Replicate from "replicate";
 
+import { PdfReader } from "pdfreader";
 
+import * as pdfjsLib from 'pdfjs-dist';
 
-const pdf = require('pdf-parse');
+async function getPdfText(url: string): Promise<string> {
+  try {
+    // Load the PDF document from the URL
+    const loadingTask = pdfjsLib.getDocument(url);
+    const pdfDoc = await loadingTask.promise;
 
-async function getPdfText(pdfUrl: string): Promise<string> {
-  const response = await fetch(pdfUrl);
-  const arrayBuffer = await response.arrayBuffer();
-  const data = await pdf(arrayBuffer);
-  console.log('data 4 real', data.text)
-  return data.text;  // This contains the text of the PDF
+    // Extract text from all pages
+    let pdfText = '';
+    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+      const page = await pdfDoc.getPage(pageNum);
+      const textContent = await page.getTextContent();
+
+      // Combine text from the page into a single string
+      const pageText = textContent.items
+        .map((item: any) => item.str) // Extract text from each item
+        .join(' ');
+
+      pdfText += pageText + '\n';
+    }
+
+    return pdfText.trim();
+  } catch (error) {
+    console.error('Error reading PDF:', error);
+    throw new Error('Failed to read PDF');
+  }
 }
 
 

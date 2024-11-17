@@ -46,18 +46,14 @@ const Dashboard = () => {
         };
         getUser();
     }, [supabase, router]);
-  const data = [
-    { quarter: '1st quarter', average: 75 },
-    { quarter: '2nd quarter', average: 80 },
-    { quarter: '3rd quarter', average: 93 },
-    { quarter: '4th quarter', average: 87 }
-  ];
 
   return (
     <AuthWrapper>
         <Frame>
+            <div className='flex gap-4 p-4'>
         <LineChart />
         <WritingMetricsChart user={prismaUser?.id} />
+        </div>
     </Frame>
     </AuthWrapper>
   );
