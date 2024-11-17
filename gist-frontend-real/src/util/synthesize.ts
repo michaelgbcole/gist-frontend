@@ -19,8 +19,8 @@ async function checkPredictionStatus(prediction_id: string): Promise<any> {
 export default async function synthesize(overallFeedback: String): Promise<string[]> {
     const input = {
         top_p: 0.9,
-        prompt: `This is what the answer to the question should cover, according to the teacher:. The student's answer is: .`,
-        system_prompt: "You are an experienced teacher, and your job is to synthesize ",     
+        prompt: `Here is the array: ${overallFeedback}`,
+        system_prompt: `<instructions>You are an experienced teacher, and your job is to take in an array of the feedback from many essays and return the six most important issues, rated on a scale of 50-100, with 100 being the greatest area of improvement.  YOUR RESPONSE SHOULD ONLY INCLUDE THIS FORMATTING, DO NOT WRITE ANY JUSTIFICATION, ONLY THE FOLLOWING FORMAT (if your response includes any other data, you will be fired): [{"metric": "Grammar", "value": 54}, {"metric": "Thesis", "value": 73 }]  <instructions> `,     
         min_tokens: 0,
         temperature: 0.6,
         presence_penalty: 1.15

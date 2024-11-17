@@ -29,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const fileName = pdfUrl.split('/').pop()?.split('.pdf')[0];
       console.log('fileName:', fileName);
       console.log('results:', results);
+      
       try {
         const grade = await prisma.grade.create({
             data: {
@@ -38,7 +39,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 fileName: fileName,
                 feedback: parsedResult?.getElementsByTagName('overallFeedback')[0].textContent ?? '',
                 batchId: batchId,
-                rubricData: parsedResult?.getElementsByTagName('criteriaFeedback')[0].textContent ?? ''
+                rubricData: parsedResult?.getElementsByTagName('criteriaFeedback')[0].textContent ?? '',
+                overall_feedback: parsedResult?.getElementsByTagName('overallFeedback')[0].textContent ?? ''
             }
         })
         return grade;

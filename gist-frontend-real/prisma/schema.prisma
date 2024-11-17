@@ -41,6 +41,8 @@ model UserData {
   formIds            Int[]
   isPayer            Boolean      @default(true)
   stripe_customer_id String?
+  averagePerformance    String?
+  essayFeedback     String @default("no data")
 }
 
 model Submission {

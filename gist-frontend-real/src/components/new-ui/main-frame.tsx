@@ -56,11 +56,13 @@ export default function Frame({ children }: FrameProps): JSX.Element {
     const router = useRouter();
     const pathname = usePathname();
     const [loading, setLoading] = useState(true);
+    const [userImage, setUserImage] = useState<string>('');
 
     useEffect(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                setUserImage(user?.user_metadata.avatar_url ?? '');
                 setUser(user);
                 const response = await fetch(`/api/user-data/${user.id}`);
                 if (response.ok) {
@@ -92,7 +94,7 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                     {/* Logo Section */}
                     <div className="w-full px-6 pt-2">
                         <img 
-                            src="/logo.png" 
+                            src='/logo.png' 
                             alt="Logo" 
                             width={253} 
                             height={40} 
@@ -153,7 +155,7 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                                             className="flex items-center gap-3 h-[50px] px-4 bg-blue-50 rounded-lg hover:bg-blue-100"
                                         >
                                             <Avatar className="h-10 w-10 bg-[#8b5dff]">
-                                                <AvatarImage src="/avatar.png" />
+                                                <AvatarImage src={userImage} />
                                                 <AvatarFallback>MN</AvatarFallback>
                                             </Avatar>
                                             <span className="font-semibold text-[15px] text-gray-800">
