@@ -1,4 +1,4 @@
-import synthesize from '@/util/synthesize';
+import synthesize from '@/util/synthesize-overall';
 import { PrismaClient } from '@prisma/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 

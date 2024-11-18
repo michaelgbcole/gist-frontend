@@ -33,6 +33,7 @@ const Grader = () => {
   const [uploading, setUploading] = useState(false);
   const [rubricTitles, setRubricsTitles] = useState<string[]>([]);
   const router = useRouter();
+  const [isStartable, setIsStartable] = useState<boolean>(true); 
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -142,6 +143,7 @@ const Grader = () => {
   };
 
   const handleStartBatch = async () => {
+    setIsStartable(false)
     if (!selectedRubric || !batchName || selectedFiles.length === 0) {
       console.log('batchName', batchName)
       console.log('selectedFiles', selectedFiles)
@@ -156,6 +158,7 @@ const Grader = () => {
     }
 
     try {
+      console.log('trying')
       const response = await fetch('/api/start-batch', {
         method: 'POST',
         headers: {
@@ -168,10 +171,7 @@ const Grader = () => {
           userId,
         }),
       });
-      router.push('/dashboard')
-
       if (!response.ok) throw new Error('Failed to start batch');
-
       toast({
         title: "Success",
         description: "Batch started successfully",
@@ -182,6 +182,7 @@ const Grader = () => {
         description: "Failed to start batch",
         variant: "destructive",
       });
+    } finally {
     }
   };
 
@@ -215,7 +216,7 @@ const Grader = () => {
             value={batchName}
             onChange={(e) => setBatchName(e.target.value)}
           />
-          <PencilIcon className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-[#00000080]" />
+          <PencilIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6  text-[#00000080]" />
         </div>
 
         <div>
@@ -242,7 +243,8 @@ const Grader = () => {
           />
         </div>
 
-        <div className="flex justify-end">
+        {isStartable ? ( 
+          <div className="flex justify-end">
           <Card 
             onClick={handleStartBatch}
             className="w-[282px] h-[82px] bg-[#85e0a3] rounded-[9.59px] border border-black shadow-md flex items-center justify-center gap-4 cursor-pointer hover:bg-[#75d093] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -252,7 +254,18 @@ const Grader = () => {
             </span>
             <WandIcon className="h-12 w-12 text-[#333333]" />
           </Card>
+        </div> ) : (
+          <div className="flex justify-end">
+          <Card
+            className="w-[282px] h-[82px] bg-[#427152] rounded-[9.59px] border border-black shadow-md flex items-center justify-center gap-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="text-[#333333] text-4xl font-bold tracking-tight">
+              Start
+            </span>
+            <WandIcon className="h-12 w-12 text-[#333333]" />
+          </Card>
         </div>
+        )}
       </Card>
     </Frame>
   );

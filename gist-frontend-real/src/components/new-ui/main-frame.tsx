@@ -17,7 +17,7 @@ import {
     FileText,
     Home,
     LogOut,
-    Settings,
+    ChartBar,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ const navigationItems = [
     { icon: FileText, label: "Gist Quizzes", path: "/dashboard/quizzes" },
     { icon: Bookmark, label: "Gist Essay Grader", path: "/dashboard/essay-grader" },
     { icon: FileStack, label: "Rubric Creator", path: "/rubric-creator" },
+    { icon: ChartBar, label: "Analysis", path: "/dashboard/analysis" },
 ];
 
 type FrameProps = {
@@ -45,6 +46,7 @@ type PrismaUser = {
     name: string | null;
     isPayer: boolean;
 };
+
 
 export default function Frame({ children }: FrameProps): JSX.Element {
     const [user, setUser] = useState<User | null>(null);
@@ -130,13 +132,13 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                 </div>
 
                 <div className="flex flex-col flex-grow">
-                    <header className="w-full bg-white border-b">
+                    <header className="w-full bg-white">
                         <div className="flex items-center justify-between px-8 py-7">
                             {/* Search Section */}
                             <div className="relative max-w-[438px] w-full">
                                 <Input
                                     className="h-[50px] pl-12 rounded-full bg-white"
-                                    placeholder="Search Quizzes, Rubrics, Students..."
+                                    placeholder="Search Quizzes, Rubrics, Essays..."
                                 />
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
                             </div>

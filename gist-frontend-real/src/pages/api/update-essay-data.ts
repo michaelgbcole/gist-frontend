@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
-import synthesize from '@/util/synthesize';
+import synthesize from '@/util/synthesize-overall';
 
 const prisma = new PrismaClient();
 

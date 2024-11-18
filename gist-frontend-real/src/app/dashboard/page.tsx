@@ -10,6 +10,7 @@ import WritingMetricsChart from '@/components/new-ui/charts/radar-chart';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
+import FilledRubric from '@/components/new-ui/filled-rubric';
 
 type PrismaUser = {
     id: string;

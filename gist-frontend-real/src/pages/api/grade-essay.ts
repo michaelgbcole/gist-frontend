@@ -43,6 +43,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 overall_feedback: parsedResult?.getElementsByTagName('overallFeedback')[0].textContent ?? ''
             }
         })
+        
+        const response = await fetch(`${process.env.HOSTED_URL}/api/update/essay-feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            batchId: batchId,
+          }),
+        })
+        if (response.ok) {
+          console.log('Essay feedback updated successfully');
+        } else {
+          console.error('Failed to update essay feedback');
+        }
+        const response2 = await fetch(`${process.env.HOSTED_URL}/api/update/class-feedback`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,          }),
+        })
+        if (response2.ok) {
+          console.log('Class feedback updated successfully');
+        } else {
+          console.error('Failed to update class feedback');
+        }
+        console.log('grade:', grade);
         return grade;
       } catch (error) {
         console.error('Error parsing JSON:', error);

@@ -18,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           rubricId: true,
           fileUrls: true,
           status: true,
+          overallFeedback: true,
         },
       });
 
