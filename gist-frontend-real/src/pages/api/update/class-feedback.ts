@@ -8,21 +8,18 @@ const prisma = new PrismaClient();
 export default async function handleFeedbackSynthesis(req: NextApiRequest, res: NextApiResponse) {
   try {
     // 1. Fetch all overallFeedback from essays
-    const essays = await prisma.grade.findMany({
+    const essays = await prisma.batch.findMany({
       where: {
         userId: req.body.userId // Assuming you're passing userId in the request
       },
         select: {
-        feedback: true
+          overallFeedback: true,
       }
     });
     console.log('essays', essays)
 
     // 2. Extract feedback into array
     const feedbackArray = essays
-      .map(essay => essay.feedback)
-      .filter((feedback): feedback is string => feedback !== null);
-      console.log('feedback', feedbackArray)
 
     // 3. Process feedback through synthesize function
     const synthesizedFeedback = await synthesize(feedbackArray.join('},{'));

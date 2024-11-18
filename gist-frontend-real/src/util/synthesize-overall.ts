@@ -15,6 +15,7 @@ async function checkPredictionStatus(prediction_id: string): Promise<any> {
 }
 
 
+
 //!! TO WRITE STILL XDDDDDDDD
 export default async function synthesize(overallFeedback: String): Promise<string[]> {
     const input = {
@@ -30,6 +31,6 @@ export default async function synthesize(overallFeedback: String): Promise<strin
         model: "meta/meta-llama-3.1-405b-instruct",
         input
     });
-
+    console.log('we running')
     return await checkPredictionStatus(prediction.id);
 }

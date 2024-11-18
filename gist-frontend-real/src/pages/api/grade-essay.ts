@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 overall_feedback: parsedResult?.getElementsByTagName('overallFeedback')[0].textContent ?? ''
             }
         })
-        
+        console.log('sendinnnnnnggggg')
         const response = await fetch(`${process.env.HOSTED_URL}/api/update/essay-feedback`, {
           method: 'POST',
           headers: {
