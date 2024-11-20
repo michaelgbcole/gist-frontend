@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import AuthWrapper from '@/components/AuthWrapper';
 import Frame from '@/components/new-ui/main-frame';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,7 @@ const Dashboard = () => {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -103,7 +104,16 @@ const Dashboard = () => {
         }
     }, [user]);
 
-
+    // New effect to handle batch query parameter
+    useEffect(() => {
+        const batchParam = searchParams?.get('batch');
+        console.log('batchparam', batchParam)
+        if (batchParam && batches.length > 0) {
+            const batchId = parseInt(batchParam);
+            handleItemSelect(`batch::${batchId}`);
+            setIsSearchVisible(false);
+        }
+    }, [searchParams, batches, user]);
 
     const fetchBatches = async () => {
         try {
@@ -148,7 +158,7 @@ const Dashboard = () => {
     const handleItemSelect = (value: string) => {
         const [type, idStr] = value.split('::');
         const id = parseInt(idStr);
-        
+        console.log(value, "valuetupe")
         if (type === 'batch') {
             const batch = batches.find(b => b.id === id);
             if (batch) {

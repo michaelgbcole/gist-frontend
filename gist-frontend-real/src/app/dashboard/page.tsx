@@ -110,7 +110,7 @@ const Dashboard = () => {
                     }
 
                     return {
-                        id: index + 1,
+                        id: batch.id,
                         title: batch.name || '',
                         score: averageScore ? `${averageScore}/10` : '',
                         feedback: compiledFeedback || '',
@@ -125,7 +125,7 @@ const Dashboard = () => {
         }
     };
 
-    const handleDetailsClick = (batchName: string) => {
+    const handleDetailsClick = (batchName: number) => {
         const encodedBatchName = encodeURIComponent(batchName);
         router.push(`/dashboard/analysis?batch=${encodedBatchName}`);
     };
@@ -139,7 +139,7 @@ const Dashboard = () => {
                         onDetailsClick={(essayId) => {
                             const batch = batches.find(b => b.id === essayId);
                             if (batch) {
-                                handleDetailsClick(batch.originalName);
+                                handleDetailsClick(essayId);
                             }
                         }}
                     />
