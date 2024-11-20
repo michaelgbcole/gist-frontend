@@ -11,12 +11,33 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
+import Quickview from '@/components/new-ui/quick-view';
 
 type PrismaUser = {
     id: string;
     email: string;
     name: string | null;
     isPayer: boolean;
+};
+
+type Batch = {
+    id: number;
+    title: string;
+    score: string;
+    feedback: string;
+    originalName: string; // Added to store the original batch name for navigation
+};
+
+type FeedbackCriteria = {
+    label: string;
+    feedback: string;
+    score: string;
+};
+
+type InitialBatch = {
+    id: number;
+    name: string | null;
+    overallFeedback: string | null;
 };
 
 const Dashboard = () => {
@@ -28,6 +49,7 @@ const Dashboard = () => {
     );
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [batches, setBatches] = useState<Batch[]>([]);
 
     useEffect(() => {
         const getUser = async () => {
@@ -35,7 +57,6 @@ const Dashboard = () => {
             if (user) {
                 setUser(user);
                 const response = await fetch(`/api/user-data/${user.id}`);
-                console.log(response)
                 if (response.ok) {
                     const userData: PrismaUser = await response.json();
                     setPrismaUser(userData);
@@ -46,18 +67,86 @@ const Dashboard = () => {
             setLoading(false);
         };
         getUser();
+        fetchBatches();
     }, [supabase, router]);
 
-  return (
-    <AuthWrapper>
-        <Frame>
-            <div className='flex gap-4 p-4'>
-        <LineChart />
-        <WritingMetricsChart user={prismaUser?.id} />
-        </div>
-    </Frame>
-    </AuthWrapper>
-  );
+    const fetchBatches = async () => {
+        try {
+            const response = await fetch('/api/get-batches', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: user?.id }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const transformedBatches = data.batches.map((batch: InitialBatch, index: number) => {
+                    let feedbackArray: FeedbackCriteria[] = [];
+                    let averageScore = 0;
+                    let compiledFeedback = '';
+
+                    if (batch.overallFeedback) {
+                        try {
+                            feedbackArray = JSON.parse(batch.overallFeedback);
+                            
+                            if (Array.isArray(feedbackArray) && feedbackArray.length > 0) {
+                                const scores = feedbackArray.map(item => 
+                                    parseInt(item.score?.split('/')[0] || '0')
+                                );
+                                averageScore = Math.round(
+                                    scores.reduce((a, b) => a + b, 0) / scores.length
+                                );
+                                
+                                compiledFeedback = feedbackArray
+                                    .map(item => `${item.label || ''}: ${item.feedback || ''}`)
+                                    .filter(text => text !== ': ')
+                                    .join('\n');
+                            }
+                        } catch (error) {
+                            console.error('Error parsing feedback:', error);
+                        }
+                    }
+
+                    return {
+                        id: index + 1,
+                        title: batch.name || '',
+                        score: averageScore ? `${averageScore}/10` : '',
+                        feedback: compiledFeedback || '',
+                        originalName: batch.name || '', // Store original name for navigation
+                    };
+                });
+
+                setBatches(transformedBatches);
+            }
+        } catch (error) {
+            console.error('Error fetching batches:', error);
+        }
+    };
+
+    const handleDetailsClick = (batchName: string) => {
+        const encodedBatchName = encodeURIComponent(batchName);
+        router.push(`/dashboard/analysis?batch=${encodedBatchName}`);
+    };
+
+    return (
+        <AuthWrapper>
+            <Frame>
+                <div className='flex gap-4 p-4'>
+                    <Quickview 
+                        essays={batches} 
+                        onDetailsClick={(essayId) => {
+                            const batch = batches.find(b => b.id === essayId);
+                            if (batch) {
+                                handleDetailsClick(batch.originalName);
+                            }
+                        }}
+                    />
+                </div>
+            </Frame>
+        </AuthWrapper>
+    );
 };
 
 export default Dashboard;

@@ -2,13 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import AuthWrapper from '@/components/AuthWrapper';
 import Frame from '@/components/new-ui/main-frame';
-import LineChart from '@/components/new-ui/charts/line-chart';
-import WritingMetricsChart from '@/components/new-ui/charts/radar-chart';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
 
@@ -27,7 +24,7 @@ type CriteriaFeedback = {
 
 type Batch = {
     name: string;
-    overallFeedback: string; // Changed to string since API returns JSON string
+    overallFeedback: string;
 };
 
 const Dashboard = () => {
@@ -42,6 +39,7 @@ const Dashboard = () => {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -68,6 +66,15 @@ const Dashboard = () => {
         }
     }, [user]);
 
+    useEffect(() => {
+        // Get the batch name from URL parameters and select it
+        const batchFromUrl = searchParams?.get('batch');
+        if (batchFromUrl && batches.length > 0) {
+            const decodedBatchName = decodeURIComponent(batchFromUrl);
+            handleBatchChange(decodedBatchName);
+        }
+    }, [searchParams, batches]);
+
     const parseFeedback = (feedbackString: string): CriteriaFeedback[] => {
         try {
             return JSON.parse(feedbackString);
@@ -91,8 +98,20 @@ const Dashboard = () => {
                 const data = await response.json();
                 setBatches(data.batches);
                 
-                // Set the first batch as selected by default and parse its feedback
-                if (data.batches.length > 0) {
+                // Check for URL parameter after batches are loaded
+                const batchFromUrl = searchParams?.get('batch');
+                if (batchFromUrl) {
+                    const decodedBatchName = decodeURIComponent(batchFromUrl);
+                    setSelectedBatch(decodedBatchName);
+                    const selectedBatchData = data.batches.find(
+                        (batch: Batch) => batch.name === decodedBatchName
+                    );
+                    if (selectedBatchData) {
+                        const parsedFeedback = parseFeedback(selectedBatchData.overallFeedback);
+                        setCurrentFeedback(parsedFeedback);
+                    }
+                } else if (data.batches.length > 0) {
+                    // If no URL parameter, select first batch as default
                     setSelectedBatch(data.batches[0].name);
                     const parsedFeedback = parseFeedback(data.batches[0].overallFeedback);
                     setCurrentFeedback(parsedFeedback);
@@ -109,6 +128,8 @@ const Dashboard = () => {
         if (selectedBatchData) {
             const parsedFeedback = parseFeedback(selectedBatchData.overallFeedback);
             setCurrentFeedback(parsedFeedback);
+            // Update URL when batch is changed
+            router.push(`/dashboard/analysis?batch=${encodeURIComponent(value)}`, { scroll: false });
         }
     };
 
