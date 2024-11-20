@@ -1,13 +1,23 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList
+} from "@/components/ui/command"
+import { Badge } from '@/components/ui/badge';
 import AuthWrapper from '@/components/AuthWrapper';
 import Frame from '@/components/new-ui/main-frame';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 
 type PrismaUser = {
     id: string;
@@ -23,114 +33,156 @@ type CriteriaFeedback = {
 };
 
 type Batch = {
+    id: number;
     name: string;
     overallFeedback: string;
+};
+
+type RubricData = {
+    [key: string]: {
+        feedback: string;
+        score: string;
+    };
+};
+
+type Grade = {
+    id: number;
+    fileName: string;
+    rubricData: string;
 };
 
 const Dashboard = () => {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
-    const [selectedBatch, setSelectedBatch] = useState<string>('');
+    const [selectedItem, setSelectedItem] = useState<string>('');
     const [batches, setBatches] = useState<Batch[]>([]);
+    const [grades, setGrades] = useState<Grade[]>([]);
     const [currentFeedback, setCurrentFeedback] = useState<CriteriaFeedback[]>([]);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
     
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setUser(user);
-                const response = await fetch(`/api/user-data/${user.id}`);
-                if (response.ok) {
-                    const userData: PrismaUser = await response.json();
-                    setPrismaUser(userData);
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                if (error) throw error;
+                
+                if (user) {
+                    setUser(user);
+                    const response = await fetch(`/api/user-data/${user.id}`);
+                    if (response.ok) {
+                        const userData: PrismaUser = await response.json();
+                        setPrismaUser(userData);
+                    }
+                } else {
+                    await router.push('/');
+                    return;
                 }
-            } else {
-                router.push('/');
+            } catch (error) {
+                console.error('Auth error:', error);
+                await router.push('/');
+                return;
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
+        
         getUser();
     }, [supabase, router]);
 
     useEffect(() => {
         if (user?.id) {
             fetchBatches();
+            fetchGrades();
         }
     }, [user]);
 
-    useEffect(() => {
-        // Get the batch name from URL parameters and select it
-        const batchFromUrl = searchParams?.get('batch');
-        if (batchFromUrl && batches.length > 0) {
-            const decodedBatchName = decodeURIComponent(batchFromUrl);
-            handleBatchChange(decodedBatchName);
-        }
-    }, [searchParams, batches]);
 
-    const parseFeedback = (feedbackString: string): CriteriaFeedback[] => {
-        try {
-            return JSON.parse(feedbackString);
-        } catch (error) {
-            console.error('Error parsing feedback:', error);
-            return [];
-        }
-    };
 
     const fetchBatches = async () => {
         try {
             const response = await fetch('/api/get-batches', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: user?.id }),
             });
-    
+            
             if (response.ok) {
                 const data = await response.json();
-                setBatches(data.batches);
-                
-                // Check for URL parameter after batches are loaded
-                const batchFromUrl = searchParams?.get('batch');
-                if (batchFromUrl) {
-                    const decodedBatchName = decodeURIComponent(batchFromUrl);
-                    setSelectedBatch(decodedBatchName);
-                    const selectedBatchData = data.batches.find(
-                        (batch: Batch) => batch.name === decodedBatchName
-                    );
-                    if (selectedBatchData) {
-                        const parsedFeedback = parseFeedback(selectedBatchData.overallFeedback);
-                        setCurrentFeedback(parsedFeedback);
-                    }
-                } else if (data.batches.length > 0) {
-                    // If no URL parameter, select first batch as default
-                    setSelectedBatch(data.batches[0].name);
-                    const parsedFeedback = parseFeedback(data.batches[0].overallFeedback);
-                    setCurrentFeedback(parsedFeedback);
-                }
+                setBatches(data.batches || []);
             }
         } catch (error) {
             console.error('Error fetching batches:', error);
+            setBatches([]);
         }
     };
 
-    const handleBatchChange = (value: string) => {
-        setSelectedBatch(value);
-        const selectedBatchData = batches.find(batch => batch.name === value);
-        if (selectedBatchData) {
-            const parsedFeedback = parseFeedback(selectedBatchData.overallFeedback);
-            setCurrentFeedback(parsedFeedback);
-            // Update URL when batch is changed
-            router.push(`/dashboard/analysis?batch=${encodeURIComponent(value)}`, { scroll: false });
+    const fetchGrades = async () => {
+        try {
+            const response = await fetch('/api/get-grades', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user?.id }),
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.grades) {
+                    setGrades(Array.isArray(data.grades) ? data.grades : []);
+                } else {
+                    setGrades([]);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching grades:', error);
+            setGrades([]);
         }
+    };
+
+    const handleItemSelect = (value: string) => {
+        const [type, idStr] = value.split('::');
+        const id = parseInt(idStr);
+        
+        if (type === 'batch') {
+            const batch = batches.find(b => b.id === id);
+            if (batch) {
+                try {
+                    const parsedFeedback = JSON.parse(batch.overallFeedback);
+                    setCurrentFeedback(parsedFeedback);
+                } catch (error) {
+                    console.error('Error parsing batch feedback:', error);
+                    setCurrentFeedback([]);
+                }
+            }
+        } else if (type === 'grade') {
+            const grade = grades.find(g => g.id === id);
+            if (grade && grade.rubricData) {
+                try {
+                    const rubricObject: RubricData = JSON.parse(grade.rubricData);
+                    
+                    const transformedFeedback: CriteriaFeedback[] = Object.entries(rubricObject).map(
+                        ([criteriaName, criteriaData]) => ({
+                            label: criteriaName,
+                            feedback: criteriaData.feedback,
+                            score: criteriaData.score
+                        })
+                    );
+                    
+                    setCurrentFeedback(transformedFeedback);
+                } catch (error) {
+                    console.error('Error parsing grade rubric data:', error);
+                    setCurrentFeedback([]);
+                }
+            }
+        }
+        setSelectedItem(value);
+        setIsSearchVisible(false);
     };
 
     if (loading) {
@@ -141,20 +193,60 @@ const Dashboard = () => {
         <AuthWrapper>
             <Frame>
                 <div className="space-y-4">
-                    <Select value={selectedBatch} onValueChange={handleBatchChange}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a batch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {batches.map((batch) => (
-                                <SelectItem key={batch.name} value={batch.name}>
-                                    {batch.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    {!isSearchVisible ? (
+                        <Button 
+                            variant="outline" 
+                            className="w-[350px] justify-between"
+                            onClick={() => setIsSearchVisible(true)}
+                        >
+                            <span>Search feedback...</span>
+                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    ) : (
+                        <Card className="w-[350px]">
+                            <Command>
+                                <CommandInput 
+                                    placeholder="Search feedback..." 
+                                    autoFocus
+                                />
+                                <CommandList>
+                                    <CommandEmpty>No results found.</CommandEmpty>
+                                    <CommandGroup heading="Assignments">
+                                        {batches.map((batch) => (
+                                            <CommandItem
+                                                key={`batch::${batch.id}`}
+                                                value={batch.name}
+                                                onSelect={() => handleItemSelect(`batch::${batch.id}`)}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span>{batch.name}</span>
+                                                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+                                                    Assignment
+                                                </Badge>
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                    <CommandGroup heading="Essays">
+                                        {grades.map((grade) => (
+                                            <CommandItem
+                                                key={`grade::${grade.id}`}
+                                                value={grade.fileName}
+                                                onSelect={() => handleItemSelect(`grade::${grade.id}`)}
+                                                className="flex items-center justify-between"
+                                            >
+                                                <span>{grade.fileName}</span>
+                                                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">
+                                                    Essay
+                                                </Badge>
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </Card>
+                    )}
                     
-                    {currentFeedback && (
+                    {currentFeedback && currentFeedback.length > 0 && (
                         <FilledRubric criteriaData={currentFeedback} />
                     )}
                 </div>

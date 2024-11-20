@@ -8,6 +8,7 @@ import { ClipboardIcon, PencilIcon, WandIcon } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
+import RubricMaker from '@/components/rubric-creator';
 
 interface FileInfo {
   name: string;
@@ -190,6 +191,7 @@ const Grader = () => {
     <Frame>
       <Card className="w-full max-w-4xl p-5 space-y-5">
         <div className="flex gap-4">
+
           <Select onValueChange={handleRubricSelect}>
             <SelectTrigger
               className="w-full h-20 bg-[#bba8ff] rounded-lg shadow-md flex items-center justify-start px-6 gap-4"
@@ -208,7 +210,7 @@ const Grader = () => {
             </SelectContent>
           </Select>
         </div>
-
+          <RubricMaker userId={userId}/>
         <div className="relative">
           <Input
             className="w-72 h-[67px] bg-[#85e0a3] rounded-[17px] pl-12 text-[#00000080] font-bold"

@@ -54,6 +54,16 @@ const bgColors = [
     "bg-[#ff8c8a]",
     "bg-[#ffad67]",
     "bg-[#eda1f1]",
+    "bg-[#52e2b5]",
+    "bg-[#76b4ff]",
+    "bg-[#ff8c8a]",
+    "bg-[#ffad67]",
+    "bg-[#eda1f1]",
+    "bg-[#52e2b5]",
+    "bg-[#76b4ff]",
+    "bg-[#ff8c8a]",
+    "bg-[#ffad67]",
+    "bg-[#eda1f1]",
 ];
 
 export default function FilledRubric( { criteriaData } : FilledRubricProps) {

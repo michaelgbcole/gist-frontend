@@ -5,15 +5,15 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { batchId } = req.body;
+    const { userId } = req.body;
 
-    if (!batchId) {
+    if (!userId) {
       return res.status(400).json({ error: 'Batch ID is required' });
     }
 
     try {
       const grades = await prisma.grade.findMany({
-        where: { batchId },
+        where: { userId },
         select: {
           id: true,
           score: true,
