@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { FaGoogle } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import { MousePointer } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export default function Login() {
   const router = useRouter();
@@ -17,6 +19,12 @@ export default function Login() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
+  const footerLinks = [
+    { text: "Privacy", href: "#" },
+    { text: "Terms & Conditions", href: "#" },
+    { text: "Twitter", href: "https://twitter.com/" },
+  ]
+  
   const handleGoogleAuth = async (isSignUp: boolean, role?: string) => {
     const redirectTo = `${window.location.origin}/auth/v1/callback?isSignUp=${isSignUp}${role ? `&role=${role}` : ''}`;
     
@@ -39,66 +47,75 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-gray-800">
-      <NavBar />
-      <main className="flex-grow flex items-center justify-center p-4 sm:p-12">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-3xl font-bold text-center">Welcome</CardTitle>
-            <CardDescription className="text-center text-gray-500">
-              Choose an option to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!showRoleSelection ? (
-              <>
-                <Button
-                  onClick={() => handleGoogleAuth(false)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  size="lg"
-                >
-                  <FaGoogle className="mr-2 h-4 w-4" /> Login with Google
-                </Button>
-                <Button
-                  onClick={() => setShowRoleSelection(true)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  size="lg"
-                >
-                  <FaGoogle className="mr-2 h-4 w-4" /> Sign Up with Google
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  onClick={() => handleGoogleAuth(true, 'teacher')}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                  size="lg"
-                >
-                  Sign Up as Teacher
-                </Button>
-                <Button
-                  onClick={() => handleGoogleAuth(true, 'student')}
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
-                  size="lg"
-                >
-                  Sign Up as Student
-                </Button>
-                <Button
-                  onClick={() => setShowRoleSelection(false)}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white"
-                  size="lg"
-                >
-                  Back
-                </Button>
-              </>
-            )}
-            <div className="text-center text-sm text-gray-500">
-              By continuing, you agree to our Terms of Service and Privacy Policy.
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-      <Footer />
+<>
+    <NavBar />
+    <div className="flex min-h-screen items-center justify-center bg-[#f7f7f7] p-8">
+      <Card className="w-full max-w-[1440px] rounded-[15px]">
+        <CardContent className="flex flex-col items-center p-8">
+          {/* Logo/Image Section */}
+          <div className="mb-8 w-[266px]">
+            <img
+              src="/logo.png"
+              alt="Gist growth"
+              className="object-cover"
+            />
+          </div>
+
+          {/* Main Content */}
+          <div className="mb-12 text-center">
+            <h1 className="mb-4 font-bold text-3xl tracking-[0.60px] text-[#514b5f]">
+              Welcome to the Future of Grading
+            </h1>
+            <p className="font-semibold text-[25px] text-[#8b5dff80] tracking-[0.50px]">
+              Faster than ever before...
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="mb-8 space-y-6 w-[376px]">
+          <Button
+              variant="outline"
+              className="w-full h-[63px] text-xl font-semibold text-[#33333394] bg-white shadow-[0px_4px_4px_#00000040]"
+              onClick={() => handleGoogleAuth(true, 'Teacher')}
+            >
+              <MousePointer className="mr-4 h-6 w-6" />
+              Click here to Sign up
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-[63px] text-xl font-semibold text-[#33333394] bg-white shadow-[0px_4px_4px_#00000040]"
+              onClick={() => handleGoogleAuth(false)}
+            >
+              <FaGoogle className=''/>
+              <p className='pl-4'>Sign in with Google</p>
+            </Button>
+
+
+          </div>
+
+          {/* Steps Text */}
+          <p className="mb-12 text-center font-semibold text-[25px] text-[#00000063] tracking-[0.50px]">
+            In three easy steps
+            <br />
+            Upload -&gt; Grade -&gt; Details.
+          </p>
+
+          {/* Footer Links */}
+          <div className="flex gap-6 text-xl font-semibold text-[#8b5dff96]">
+            {footerLinks.map((link, index) => (
+              <React.Fragment key={link.text}>
+                <a href={link.href} className="hover:text-[#8b5dff]">
+                  {link.text}
+                </a>
+                {index < footerLinks.length - 1 && (
+                  <Separator orientation="vertical" className="h-6" />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
+  </>
   );
 }
