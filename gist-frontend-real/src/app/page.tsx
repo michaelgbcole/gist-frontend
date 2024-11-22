@@ -5,6 +5,10 @@ import { navItems } from '@/lib/navigation';
 import { sections } from '@/lib/sections';
 import { FeatureCardProps, NavItemProps, SectionProps } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+
+import { Button } from '@/components/ui/button';
+import { ArrowUpRight } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   const router = useRouter();
@@ -17,7 +21,7 @@ const LandingPage: React.FC = () => {
       router.push('/login');
     }
   };
-  
+
   const renderFeatureCard = ({ icon, title, description, iconAlt }: FeatureCardProps) => (
     <div className="flex flex-col gap-6 px-6 pt-6 pb-8 w-full bg-white rounded-2xl shadow-lg">
       <img
@@ -35,15 +39,6 @@ const LandingPage: React.FC = () => {
     </div>
   );
 
-  const renderNavItem = ({ label, href }: NavItemProps) => (
-    <a
-      key={href}
-      href={href}
-      className="text-gray-600 hover:text-violet-500 transition-colors"
-    >
-      {label}
-    </a>
-  );
 
   const renderSection = ({ number, title, description, imageUrl, imageAlt }: SectionProps, index: number) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -57,7 +52,7 @@ const LandingPage: React.FC = () => {
         <p className="text-xl text-gray-500">
           {description}
         </p>
-        <button 
+        <button
           className="px-4 py-2 text-sm w-fit font-medium bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors"
           onClick={() => router.push('/login')}
         >
@@ -76,6 +71,7 @@ const LandingPage: React.FC = () => {
       )}
     </div>
   );
+  const headingText = ["Upload Essays", "&", "Grade within minutes."];
 
   const renderHeroSection = () => (
     <section className="bg-white py-24">
@@ -100,7 +96,7 @@ const LandingPage: React.FC = () => {
                   <h1 className="text-4xl md:text-5xl font-bold text-slate-950 mb-12">
                     Tedious grading sucks
                   </h1>
-                  
+
                   <div className="flex justify-center">
                     <input
                       ref={fileInputRef}
@@ -111,7 +107,7 @@ const LandingPage: React.FC = () => {
                       accept=".doc,.docx,.pdf,.txt"
                       id="file-upload"
                     />
-                    <button 
+                    <button
                       className="group inline-flex items-center justify-center space-x-3 px-8 py-4 text-2xl font-bold text-violet-500 bg-white rounded-2xl border border-neutral-200 shadow-lg hover:bg-violet-50 transition-colors"
                       onClick={() => fileInputRef.current?.click()}
                     >
@@ -123,7 +119,7 @@ const LandingPage: React.FC = () => {
                       <span>Upload your Essays Here</span>
                     </button>
                   </div>
-                  
+
                   <p className="mt-12 text-lg text-zinc-500">
                     Create, Grade, and produce Feedback faster than ever before.
                   </p>
@@ -148,19 +144,16 @@ const LandingPage: React.FC = () => {
                 className="w-48 h-auto"
               />
             </a>
-            
-            <div className="hidden md:flex items-center space-x-6">
-              {navItems.map(renderNavItem)}
-            </div>
+
 
             <div className="flex items-center space-x-4">
-              <button 
+              <button
                 className="px-4 py-2 text-sm font-medium bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors"
                 onClick={() => router.push('login')}
               >
                 Get Started
               </button>
-              <button 
+              <button
                 className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 aria-label="Toggle menu"
               >
@@ -199,6 +192,30 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
       </div>
+      <Card className="w-full bg-purple-500 rounded-none border-0">
+      <CardContent className="flex flex-col items-center gap-6 px-8 py-8 md:px-16">
+        <div className="flex flex-col items-center w-full">
+          <h1 className="text-4xl font-bold text-white text-center leading-10">
+            Upload Essays & Grade within minutes.
+          </h1>
+        </div>
+
+        <button className="flex items-center justify-center px-4 py-2 bg-white border-2 border-black rounded-full hover:bg-gray-200">
+          <span className="text-black font-medium">
+            Get Started Now
+          </span>
+        </button>
+        
+        {/* Using a placeholder image since external images aren't supported */}
+        <div className="w-24 h-8">
+          <img
+            className="w-full h-full"
+            alt="Vector"
+            src="/Vector.svg"
+          />
+        </div>
+      </CardContent>
+    </Card>
 
       <footer className="border-t border-gray-200 py-8">
         <div className="container mx-auto px-4">
@@ -211,7 +228,7 @@ const LandingPage: React.FC = () => {
               />
             </a>
             <nav className="flex items-center space-x-8">
-              <a href="#signin" className="text-slate-950 hover:text-violet-500 transition-colors">Sign In</a>
+              <a href="/login" className="text-slate-950 hover:text-violet-500 transition-colors">Sign In</a>
               <a href="#beta" className="text-slate-950 hover:text-violet-500 transition-colors">BETA</a>
               <a href="#coming-soon" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
               <a href="#coming-soon-2" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
