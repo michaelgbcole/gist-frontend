@@ -1,233 +1,228 @@
-'use client'
+"use client";
+import * as React from 'react';
+import { features } from '@/lib/features';
+import { navItems } from '@/lib/navigation';
+import { sections } from '@/lib/sections';
+import { FeatureCardProps, NavItemProps, SectionProps } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
-import { useState, useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { ChevronRight, CheckCircle, Book, Brain, Clock, Star, BarChart } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import NavBar from '@/components/nav-bar'
-import Footer from '@/components/footer'
+const LandingPage: React.FC = () => {
+  const router = useRouter();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-const StaticStarryBackground = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Files were selected, now redirect to login
+      router.push('/login');
     }
+  };
+  
+  const renderFeatureCard = ({ icon, title, description, iconAlt }: FeatureCardProps) => (
+    <div className="flex flex-col gap-6 px-6 pt-6 pb-8 w-full bg-white rounded-2xl shadow-lg">
+      <img
+        loading="lazy"
+        src={icon}
+        alt={iconAlt}
+        className="w-12 h-12"
+      />
+      <h3 className="text-xl font-semibold text-slate-950">
+        {title}
+      </h3>
+      <p className="text-base text-gray-600">
+        {description}
+      </p>
+    </div>
+  );
 
-    resizeCanvas()
-    window.addEventListener('resize', resizeCanvas)
+  const renderNavItem = ({ label, href }: NavItemProps) => (
+    <a
+      key={href}
+      href={href}
+      className="text-gray-600 hover:text-violet-500 transition-colors"
+    >
+      {label}
+    </a>
+  );
 
-    const stars: { x: number; y: number; radius: number }[] = []
-    const starCount = 200
+  const renderSection = ({ number, title, description, imageUrl, imageAlt }: SectionProps, index: number) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+      <div className={`flex flex-col justify-center space-y-6 ${index % 2 === 1 ? 'md:order-2' : ''}`}>
+        <span className="text-sm font-medium tracking-wide text-violet-500">
+          {number}
+        </span>
+        <h2 className="text-4xl md:text-5xl font-bold text-slate-950">
+          {title}
+        </h2>
+        <p className="text-xl text-gray-500">
+          {description}
+        </p>
+        <button 
+          className="px-4 py-2 text-sm w-fit font-medium bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors"
+          onClick={() => router.push('/login')}
+        >
+          Get Started
+        </button>
+      </div>
+      {imageUrl && (
+        <div className={`flex justify-center items-center bg-slate-50 rounded-xl p-8 ${index % 2 === 1 ? 'md:order-1' : ''}`}>
+          <img
+            loading="lazy"
+            src={imageUrl}
+            alt={imageAlt}
+            className="w-full max-w-lg object-contain"
+          />
+        </div>
+      )}
+    </div>
+  );
 
-    for (let i = 0; i < starCount; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: Math.random() * 1.5 + 0.5
-      })
-    }
+  const renderHeroSection = () => (
+    <section className="bg-white py-24">
+      <div className="container mx-auto px-4">
+        <div className="">
+          <div className="absolute inset-0 -mx-4 overflow-hidden">
+            <img
+              src="/pattern.png"
+              alt=""
+              className="w-full h-full object-cover"
+              aria-hidden="true"
+            />
+          </div>
 
-    const drawStars = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+          <div className="relative mx-auto max-w-5xl bg-white rounded-3xl border border-gray-200 shadow-lg p-8">
+            <div className="relative">
+              <div className="absolute inset-0 overflow-hidden rounded-2xl">
+              </div>
 
-      stars.forEach((star) => {
-        ctx.beginPath()
-        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2)
-        ctx.fill()
-      })
-    }
-
-    drawStars()
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas)
-    }
-  }, [])
-
-  return <canvas ref={canvasRef} className="fixed top-0 left-0 w-full h-full pointer-events-none" />
-}
-
-export default function GistLandingPage() {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0)
-  const testimonials = [
-    { name: 'Sarah Johnson', role: 'High School History Teacher', content: 'Gist has cut my grading time by 80%. I now have more time to focus on improving my teaching methods.' },
-    { name: 'Dr. Michael Lee', role: 'High School English Teacher', content: 'The Essay Grader tool is a game-changer. It provides consistent and fair grading, which my students appreciate.' },
-    { name: 'Emily Chen', role: 'Education Coordinator', content: 'Gist helps us identify trends and improve our curriculum.' },
-  ]
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [testimonials.length])
+              <div className="relative border-4 border-dashed border-gray-200 rounded-2xl p-8 md:p-12">
+                <div className="text-center max-w-2xl mx-auto">
+                  <h1 className="text-4xl md:text-5xl font-bold text-slate-950 mb-12">
+                    Tedious grading sucks
+                  </h1>
+                  
+                  <div className="flex justify-center">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".doc,.docx,.pdf,.txt"
+                      id="file-upload"
+                    />
+                    <button 
+                      className="group inline-flex items-center justify-center space-x-3 px-8 py-4 text-2xl font-bold text-violet-500 bg-white rounded-2xl border border-neutral-200 shadow-lg hover:bg-violet-50 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <img
+                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/fd2147ed53f227f951212616f0b503b4a389301dd59b8145b57e3da4e8782cc9"
+                        alt="Upload icon"
+                        className="w-8 h-8"
+                      />
+                      <span>Upload your Essays Here</span>
+                    </button>
+                  </div>
+                  
+                  <p className="mt-12 text-lg text-zinc-500">
+                    Create, Grade, and produce Feedback faster than ever before.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white relative">
-      <StaticStarryBackground />
-      <div className="relative z-10">
-        <header className="container mx-auto px-4 py-6">
-          <NavBar />
-        </header>
+    <main className="min-h-screen">
+      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-50 py-4">
+        <div className="container mx-auto px-4">
+          <nav className="flex items-center justify-between">
+            <a href="/" className="flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="Brand logo"
+                className="w-48 h-auto"
+              />
+            </a>
+            
+            <div className="hidden md:flex items-center space-x-6">
+              {navItems.map(renderNavItem)}
+            </div>
 
-        <main>
-          <section className="container mx-auto px-4 py-20">
-            <motion.div
-              className="max-w-2xl mx-auto text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-5xl font-bold mb-6 text-white">Revolutionize Your Grading with AI</h1>
-              <p className="text-xl mb-8 text-gray-300">Gist cuts teacher grading time by ~80% with powerful AI tools. Spend less time grading and more time teaching.</p>
-              <a href="/login">
-                <Button size="lg" className="mr-4 bg-blue-400 text-black hover:bg-blue-500">
-                  Get Started <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </a>
-            </motion.div>
-          </section>
-
-          <section id="features" className="py-20">
-            <div className="container mx-auto px-4">
-              <motion.h2
-                className="text-3xl font-bold text-center mb-12 text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+            <div className="flex items-center space-x-4">
+              <button 
+                className="px-4 py-2 text-sm font-medium bg-violet-500 text-white rounded-lg hover:bg-violet-600 transition-colors"
+                onClick={() => router.push('login')}
               >
-                Powerful Tools for Educators
-              </motion.h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  { icon: Brain, title: 'Essay Grader', description: 'AI-powered tool to grade essays quickly and consistently.' },
-                  { icon: CheckCircle, title: 'Quizzes', description: 'Create and grade quizzes effortlessly with our intelligent system.' },
-                  { icon: BarChart, title: 'Analytics (Coming Soon)', description: 'Gain insights into class performance and identify areas for improvement.' },
-                ].map((feature, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-gray-800 p-6 rounded-lg"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.2 }}
-                  >
-                    <feature.icon className="h-12 w-12 text-blue-400 mb-4" />
-                    <h3 className="text-xl font-semibold mb-2 text-white">{feature.title}</h3>
-                    <p className="text-gray-300">{feature.description}</p>
-                  </motion.div>
-                ))}
+                Get Started
+              </button>
+              <button 
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
+          </nav>
+        </div>
+      </header>
+
+      <div className="pt-20">
+        {renderHeroSection()}
+
+        <section className="py-24">
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl font-bold text-center text-slate-950 mb-16">
+              Powerful tools for Educators
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {features.map((feature, index) => (
+                <div key={index}>{renderFeatureCard(feature)}</div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="py-24">
+          <div className="container mx-auto px-4">
+            {sections.map((section, index) => (
+              <div key={index} className={index > 0 ? "mt-24" : ""}>
+                {renderSection(section, index)}
               </div>
-            </div>
-          </section>
-
-          <section id="how-it-works" className="py-20">
-            <div className="container mx-auto px-4">
-              <motion.h2
-                className="text-3xl font-bold text-center mb-12 text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                How Gist Transforms Your Grading Process
-              </motion.h2>
-              <div className="flex justify-center">
-                <motion.ol className="relative border-l border-gray-700">
-                  {[
-                    { title: 'Upload Assignments', description: 'Submit essays or quizzes to the Gist platform.' },
-                    { title: 'AI Grading', description: 'Our advanced AI grades assignments with high accuracy.' },
-                    { title: 'Review Results', description: 'Quickly review AI-graded assignments and make adjustments if needed.' },
-                    { title: 'Analyze Performance', description: 'Use analytics to gain insights into class and individual student performance.' },
-                  ].map((step, index) => (
-                    <motion.li
-                      key={index}
-                      className="mb-10 ml-6"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.6, delay: index * 0.2 }}
-                    >
-                      <span className="absolute flex items-center justify-center w-8 h-8 bg-blue-900 rounded-full -left-4 ring-4 ring-gray-800">
-                        <Book className="w-4 h-4 text-blue-400" />
-                      </span>
-                      <h4 className="text-lg font-semibold text-white">{step.title}</h4>
-                      <p className="text-base text-gray-300">{step.description}</p>
-                    </motion.li>
-                  ))}
-                </motion.ol>
-              </div>
-            </div>
-          </section>
-
-          <section id="testimonials" className="py-20">
-            <div className="container mx-auto px-4">
-              <motion.h2
-                className="text-3xl font-bold text-center mb-12 text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                What Educators Are Saying
-              </motion.h2>
-              <motion.div
-                className="bg-gray-800 p-8 rounded-lg shadow-lg max-w-2xl mx-auto"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Star className="h-8 w-8 text-yellow-400 mb-4" />
-                <p className="text-lg mb-4 text-gray-300">{testimonials[currentTestimonial].content}</p>
-                <div>
-                  <p className="font-semibold text-white">{testimonials[currentTestimonial].name}</p>
-                  <p className="text-gray-400">{testimonials[currentTestimonial].role}</p>
-                </div>
-              </motion.div>
-            </div>
-          </section>
-
-          <section className="py-20">
-            <div className="container mx-auto px-4 text-center">
-              <motion.h2
-                className="text-3xl font-bold mb-6 text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                Ready to Revolutionize Your Grading?
-              </motion.h2>
-              <motion.p
-                className="text-xl mb-8 text-gray-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Join Gist today and experience the power of AI-assisted grading. Save time, improve consistency, and gain valuable insights into your class performance.
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                <a href='/login'>
-                <Button size="lg" className="mr-4 bg-blue-400 text-black hover:bg-blue-500">
-                  Start Your Free Trial
-                </Button>
-                </a>
-              </motion.div>
-            </div>
-          </section>
-        </main>
-
-        <Footer />
+            ))}
+          </div>
+        </section>
       </div>
-    </div>
-  )
+
+      <footer className="border-t border-gray-200 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
+            <a href="/" className="flex-shrink-0">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets/TEMP/8c4c766d6ad6f6efa81ecd09e389aebf9e235e6a0384be6b656c1962ed281313"
+                alt="Footer logo"
+                className="w-48 h-auto"
+              />
+            </a>
+            <nav className="flex items-center space-x-8">
+              <a href="#signin" className="text-slate-950 hover:text-violet-500 transition-colors">Sign In</a>
+              <a href="#beta" className="text-slate-950 hover:text-violet-500 transition-colors">BETA</a>
+              <a href="#coming-soon" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
+              <a href="#coming-soon-2" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
+            </nav>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+};
+
+export default function Dashboard() {
+  return <LandingPage />;
 }
