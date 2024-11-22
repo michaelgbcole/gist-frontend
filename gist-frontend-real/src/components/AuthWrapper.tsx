@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import React from 'react'
+import Frame from './new-ui/main-frame'
 
 interface AuthWrapperProps {
   children: React.ReactNode
@@ -31,7 +32,11 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   }, [])
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+    <Frame> 
+    <div>Loading...</div>
+    </Frame>
+    )
   }
 
   return <>{children}</>
