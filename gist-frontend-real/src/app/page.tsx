@@ -218,24 +218,16 @@ const LandingPage: React.FC = () => {
     </Card>
 
       <footer className="border-t border-gray-200 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
-            <a href="/" className="flex-shrink-0">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/8c4c766d6ad6f6efa81ecd09e389aebf9e235e6a0384be6b656c1962ed281313"
-                alt="Footer logo"
-                className="w-48 h-auto"
-              />
-            </a>
-            <nav className="flex items-center space-x-8">
-              <a href="/login" className="text-slate-950 hover:text-violet-500 transition-colors">Sign In</a>
-              <a href="#beta" className="text-slate-950 hover:text-violet-500 transition-colors">BETA</a>
-              <a href="#coming-soon" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
-              <a href="#coming-soon-2" className="text-slate-950 hover:text-violet-500 transition-colors">Coming Soon</a>
-            </nav>
-          </div>
-        </div>
-      </footer>
+  <div className="flex justify-center items-center">
+    <a href="/" className="">
+      <img
+        src="/logo.png"
+        alt="Footer logo"
+        className="w-48 h-auto"
+      />
+    </a>
+  </div>
+</footer>
     </main>
   );
 };
