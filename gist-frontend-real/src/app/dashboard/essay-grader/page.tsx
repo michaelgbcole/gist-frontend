@@ -194,7 +194,7 @@ const Grader = () => {
 
           <Select onValueChange={handleRubricSelect}>
             <SelectTrigger
-              className="w-full h-20 bg-[#bba8ff] rounded-lg shadow-md flex items-center justify-start px-6 gap-4"
+              className="h-20 bg-[#bba8ff] rounded-lg shadow-md flex items-center justify-start px-6 gap-4"
             >
               <ClipboardIcon className="h-6 w-6 text-white" />
               <SelectValue placeholder="Select Rubric" />

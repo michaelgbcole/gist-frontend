@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
     Command,
@@ -38,6 +38,12 @@ type Batch = {
     overallFeedback: string;
 };
 
+type Grade = {
+    id: number;
+    fileName: string;
+    rubricData: string;
+};
+
 type RubricData = {
     [key: string]: {
         feedback: string;
@@ -45,28 +51,103 @@ type RubricData = {
     };
 };
 
-type Grade = {
-    id: number;
-    fileName: string;
-    rubricData: string;
+// SearchContent component to handle search params
+const SearchContent = ({ 
+    batches, 
+    grades, 
+    isSearchVisible, 
+    setIsSearchVisible,
+    handleItemSelect 
+}: {
+    batches: Batch[];
+    grades: Grade[];
+    isSearchVisible: boolean;
+    setIsSearchVisible: (visible: boolean) => void;
+    handleItemSelect: (value: string) => void;
+}) => {
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const batchParam = searchParams?.get('batch');
+        if (batchParam && batches.length > 0) {
+            const batchId = parseInt(batchParam);
+            handleItemSelect(`batch::${batchId}`);
+            setIsSearchVisible(false);
+        }
+    }, [searchParams, batches, handleItemSelect, setIsSearchVisible]);
+
+    if (!isSearchVisible) {
+        return (
+            <Button 
+                variant="outline" 
+                className="w-[350px] justify-between"
+                onClick={() => setIsSearchVisible(true)}
+            >
+                <span>Search feedback...</span>
+                <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+        );
+    }
+
+    return (
+        <Card className="w-[350px]">
+            <Command>
+                <CommandInput 
+                    placeholder="Search feedback..." 
+                    autoFocus
+                />
+                <CommandList>
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup heading="Assignments">
+                        {batches.map((batch) => (
+                            <CommandItem
+                                key={`batch::${batch.id}`}
+                                value={batch.name}
+                                onSelect={() => handleItemSelect(`batch::${batch.id}`)}
+                                className="flex items-center justify-between"
+                            >
+                                <span>{batch.name}</span>
+                                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+                                    Assignment
+                                </Badge>
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                    <CommandGroup heading="Essays">
+                        {grades.map((grade) => (
+                            <CommandItem
+                                key={`grade::${grade.id}`}
+                                value={grade.fileName}
+                                onSelect={() => handleItemSelect(`grade::${grade.id}`)}
+                                className="flex items-center justify-between"
+                            >
+                                <span>{grade.fileName}</span>
+                                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">
+                                    Essay
+                                </Badge>
+                            </CommandItem>
+                        ))}
+                    </CommandGroup>
+                </CommandList>
+            </Command>
+        </Card>
+    );
 };
 
 const Dashboard = () => {
     const [user, setUser] = useState<User | null>(null);
     const [prismaUser, setPrismaUser] = useState<PrismaUser | null>(null);
-    const [selectedItem, setSelectedItem] = useState<string>('');
     const [batches, setBatches] = useState<Batch[]>([]);
     const [grades, setGrades] = useState<Grade[]>([]);
     const [currentFeedback, setCurrentFeedback] = useState<CriteriaFeedback[]>([]);
     const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [loading, setLoading] = useState(true);
     
+    const router = useRouter();
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getUser = async () => {
@@ -104,17 +185,6 @@ const Dashboard = () => {
         }
     }, [user]);
 
-    // New effect to handle batch query parameter
-    useEffect(() => {
-        const batchParam = searchParams?.get('batch');
-        console.log('batchparam', batchParam)
-        if (batchParam && batches.length > 0) {
-            const batchId = parseInt(batchParam);
-            handleItemSelect(`batch::${batchId}`);
-            setIsSearchVisible(false);
-        }
-    }, [searchParams, batches, user]);
-
     const fetchBatches = async () => {
         try {
             const response = await fetch('/api/get-batches', {
@@ -143,11 +213,7 @@ const Dashboard = () => {
             
             if (response.ok) {
                 const data = await response.json();
-                if (data && data.grades) {
-                    setGrades(Array.isArray(data.grades) ? data.grades : []);
-                } else {
-                    setGrades([]);
-                }
+                setGrades(Array.isArray(data.grades) ? data.grades : []);
             }
         } catch (error) {
             console.error('Error fetching grades:', error);
@@ -158,7 +224,7 @@ const Dashboard = () => {
     const handleItemSelect = (value: string) => {
         const [type, idStr] = value.split('::');
         const id = parseInt(idStr);
-        console.log(value, "valuetupe")
+        
         if (type === 'batch') {
             const batch = batches.find(b => b.id === id);
             if (batch) {
@@ -175,7 +241,6 @@ const Dashboard = () => {
             if (grade && grade.rubricData) {
                 try {
                     const rubricObject: RubricData = JSON.parse(grade.rubricData);
-                    
                     const transformedFeedback: CriteriaFeedback[] = Object.entries(rubricObject).map(
                         ([criteriaName, criteriaData]) => ({
                             label: criteriaName,
@@ -183,7 +248,6 @@ const Dashboard = () => {
                             score: criteriaData.score
                         })
                     );
-                    
                     setCurrentFeedback(transformedFeedback);
                 } catch (error) {
                     console.error('Error parsing grade rubric data:', error);
@@ -191,7 +255,6 @@ const Dashboard = () => {
                 }
             }
         }
-        setSelectedItem(value);
         setIsSearchVisible(false);
     };
 
@@ -203,58 +266,15 @@ const Dashboard = () => {
         <AuthWrapper>
             <Frame>
                 <div className="space-y-4">
-                    {!isSearchVisible ? (
-                        <Button 
-                            variant="outline" 
-                            className="w-[350px] justify-between"
-                            onClick={() => setIsSearchVisible(true)}
-                        >
-                            <span>Search feedback...</span>
-                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                    ) : (
-                        <Card className="w-[350px]">
-                            <Command>
-                                <CommandInput 
-                                    placeholder="Search feedback..." 
-                                    autoFocus
-                                />
-                                <CommandList>
-                                    <CommandEmpty>No results found.</CommandEmpty>
-                                    <CommandGroup heading="Assignments">
-                                        {batches.map((batch) => (
-                                            <CommandItem
-                                                key={`batch::${batch.id}`}
-                                                value={batch.name}
-                                                onSelect={() => handleItemSelect(`batch::${batch.id}`)}
-                                                className="flex items-center justify-between"
-                                            >
-                                                <span>{batch.name}</span>
-                                                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
-                                                    Assignment
-                                                </Badge>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                    <CommandGroup heading="Essays">
-                                        {grades.map((grade) => (
-                                            <CommandItem
-                                                key={`grade::${grade.id}`}
-                                                value={grade.fileName}
-                                                onSelect={() => handleItemSelect(`grade::${grade.id}`)}
-                                                className="flex items-center justify-between"
-                                            >
-                                                <span>{grade.fileName}</span>
-                                                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">
-                                                    Essay
-                                                </Badge>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </Card>
-                    )}
+                    <Suspense fallback={<div>Loading search...</div>}>
+                        <SearchContent
+                            batches={batches}
+                            grades={grades}
+                            isSearchVisible={isSearchVisible}
+                            setIsSearchVisible={setIsSearchVisible}
+                            handleItemSelect={handleItemSelect}
+                        />
+                    </Suspense>
                     
                     {currentFeedback && currentFeedback.length > 0 && (
                         <FilledRubric criteriaData={currentFeedback} />
