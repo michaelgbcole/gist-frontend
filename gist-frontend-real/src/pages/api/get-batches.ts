@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
+
     const { userId } = req.body;
-    console.log('userId', userId)
     try {
       // Fetch the form data using the unique link
       const batches = await prisma.batch.findMany({

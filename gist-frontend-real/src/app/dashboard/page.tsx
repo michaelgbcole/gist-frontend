@@ -70,8 +70,15 @@ const Dashboard = () => {
         fetchBatches();
     }, [supabase, router]);
 
+    useEffect(() => {
+        fetchBatches();
+    }, [user]);
+
+
     const fetchBatches = async () => {
-        try {
+        if (user?.id) {
+            console.log('running')
+            try {
             const response = await fetch('/api/get-batches', {
                 method: 'POST',
                 headers: {
@@ -108,6 +115,7 @@ const Dashboard = () => {
                             console.error('Error parsing feedback:', error);
                         }
                     }
+                    
 
                     return {
                         id: batch.id,
@@ -123,6 +131,7 @@ const Dashboard = () => {
         } catch (error) {
             console.error('Error fetching batches:', error);
         }
+    }
     };
 
     const handleDetailsClick = (batchName: number) => {

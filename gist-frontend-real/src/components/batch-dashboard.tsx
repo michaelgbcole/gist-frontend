@@ -52,7 +52,7 @@ const BatchDashboard: React.FC<BatchDashboardProps> = ({ userId, supabase, canCr
   const [showBatchCreator, setShowBatchCreator] = useState(false);
   const [batchName, setBatchName] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  console.log('batch-dashboard', userId)
   useEffect(() => {
     const fetchBatches = async () => {
       try {
