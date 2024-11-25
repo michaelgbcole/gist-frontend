@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      console.log('batches', batches)
+      console.log('batcheqs', batches)
 
 
       if (!batches) {
