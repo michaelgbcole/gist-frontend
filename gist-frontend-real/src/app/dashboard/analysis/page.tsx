@@ -13,13 +13,13 @@ import { Badge } from '@/components/ui/badge';
 import AuthWrapper from '@/components/AuthWrapper';
 import Frame from '@/components/new-ui/main-frame';
 import { createBrowserClient } from '@supabase/ssr';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 
-// Types
+// Types remain the same
 type PrismaUser = {
     id: string;
     email: string;
@@ -45,7 +45,7 @@ type Grade = {
     rubricData: string;
 };
 
-// Search component
+// SearchButton component remains the same
 const SearchButton = ({ onClick }: { onClick: () => void }) => (
     <Button 
         variant="outline" 
@@ -57,6 +57,7 @@ const SearchButton = ({ onClick }: { onClick: () => void }) => (
     </Button>
 );
 
+// SearchDialog component remains the same
 const SearchDialog = ({ 
     batches, 
     grades, 
@@ -75,7 +76,6 @@ const SearchDialog = ({
                     {batches.map((batch) => (
                         <CommandItem
                             key={batch.id}
-                            // Use a unique identifier that includes both type and id
                             value={`batch-${batch.id}-${batch.name}`}
                             onSelect={() => onSelect('batch', batch.id)}
                             className="flex items-center justify-between"
@@ -91,7 +91,6 @@ const SearchDialog = ({
                     {grades.map((grade) => (
                         <CommandItem
                             key={grade.id}
-                            // Use a unique identifier that includes both type and id
                             value={`grade-${grade.id}-${grade.fileName}`}
                             onSelect={() => onSelect('grade', grade.id)}
                             className="flex items-center justify-between"
@@ -108,7 +107,7 @@ const SearchDialog = ({
     </Card>
 );
 
-// Dashboard component
+// Modified Dashboard component
 const Dashboard = () => {
     // State
     const [user, setUser] = useState<User | null>(null);
@@ -120,36 +119,22 @@ const Dashboard = () => {
 
     // Hooks
     const router = useRouter();
-    const searchParams = useSearchParams();
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    // Authentication effect
+    // Authentication and initial data fetch effect
     useEffect(() => {
-        const checkAuth = async () => {
+        const checkAuthAndFetchData = async () => {
             try {
+                // Check authentication
                 const { data: { user }, error } = await supabase.auth.getUser();
                 if (error || !user) {
                     throw error || new Error('No user found');
                 }
                 setUser(user);
-            } catch (error) {
-                console.error('Auth error:', error);
-                router.push('/');
-            }
-        };
 
-        checkAuth();
-    }, [supabase, router]);
-
-    // Data fetching effect
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!user?.id) return;
-
-            try {
                 // Fetch batches
                 const batchesRes = await fetch('/api/get-batches', {
                     method: 'POST',
@@ -168,32 +153,31 @@ const Dashboard = () => {
                 const gradesData = await gradesRes.json();
                 setGrades(gradesData.grades || []);
 
+                const urlParams = new URLSearchParams(window.location.search);
+                const batchId = urlParams.get('batch');
+                
+                if (batchId && batchesData.batches) {
+                    const batch = batchesData.batches.find((b: Batch) => b.id === parseInt(batchId));
+                    if (batch) {
+                        try {
+                            const feedback = JSON.parse(batch.overallFeedback);
+                            setCurrentFeedback(feedback);
+                        } catch (error) {
+                            console.error('Error parsing batch feedback:', error);
+                            setCurrentFeedback([]);
+                        }
+                    }
+                }
+
                 setIsLoading(false);
             } catch (error) {
-                console.error('Error fetching data:', error);
-                setIsLoading(false);
+                console.error('Error:', error);
+                router.push('/');
             }
         };
 
-        fetchData();
-    }, [user]);
-
-    // URL parameter effect
-    useEffect(() => {
-        const batchId = searchParams?.get('batch');
-        if (!batchId || batches.length === 0) return;
-
-        const batch = batches.find(b => b.id === parseInt(batchId));
-        if (batch) {
-            try {
-                const feedback = JSON.parse(batch.overallFeedback);
-                setCurrentFeedback(feedback);
-            } catch (error) {
-                console.error('Error parsing batch feedback:', error);
-                setCurrentFeedback([]);
-            }
-        }
-    }, [searchParams, batches]);
+        checkAuthAndFetchData();
+    }, [supabase, router]);
 
     // Handlers
     const handleSelect = (type: string, id: number) => {
