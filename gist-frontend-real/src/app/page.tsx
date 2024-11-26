@@ -94,7 +94,7 @@ const LandingPage: React.FC = () => {
               <div className="relative border-4 border-dashed border-gray-200 rounded-2xl p-8 md:p-12">
                 <div className="text-center max-w-2xl mx-auto">
                   <h1 className="text-4xl md:text-5xl font-bold text-slate-950 mb-12">
-                    Tedious grading sucks
+                    Grade Essays Here.
                   </h1>
 
                   <div className="flex justify-center">
