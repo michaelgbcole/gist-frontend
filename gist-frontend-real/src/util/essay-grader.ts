@@ -1,12 +1,10 @@
-import { pdfjs } from "react-pdf";
 import Replicate from "replicate";
-
-import { PdfReader } from "pdfreader";
-
-import * as pdfjsLib from 'pdfjs-dist';
 
 async function getPdfText(url: string): Promise<string> {
   try {
+    // Dynamically import pdfjs-dist with webpack ignore
+    const pdfjsLib = await import(/* webpackIgnore: true */ 'pdfjs-dist');
+    
     // Load the PDF document from the URL
     const loadingTask = pdfjsLib.getDocument(url);
     const pdfDoc = await loadingTask.promise;
@@ -31,8 +29,6 @@ async function getPdfText(url: string): Promise<string> {
     throw new Error('Failed to read PDF');
   }
 }
-
-
 
 const replicate = new Replicate();
 async function checkPredictionStatus(prediction_id: string): Promise<any> {
