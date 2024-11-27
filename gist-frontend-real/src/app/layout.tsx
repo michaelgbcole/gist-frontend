@@ -24,14 +24,14 @@ export default function RootLayout({
         {/* Open Graph meta tags */}
         <meta property="og:title" content="Gist" />
         <meta property="og:description" content="The future of education" />
-        <meta property="og:image" content="/gist.png" />
+        <meta property="og:image" content="https://gist-quiz.com/gist.png" />
         <meta property="og:url" content="https://gist-quiz.com" />
         
         {/* Twitter-specific meta tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Gist" />
         <meta name="twitter:description" content="The future of education" />
-        <meta name="twitter:image" content="/gist.png" />
+        <meta name="twitter:image" content="https://gist-quiz.com/gist.png" />
       </head>
       <CSPostHogProvider>
       <body className={inter.className}>{children}
