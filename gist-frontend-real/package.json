@@ -63,6 +63,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.16.2",
+    "@types/pdf-parse": "^1.1.4",
     "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18",

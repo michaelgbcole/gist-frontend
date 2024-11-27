@@ -4,6 +4,11 @@ const nextConfig = {
     webpack: (config) => {
       config.resolve.alias.canvas = false;
       // Disable webpack's rule for PDF.js worker
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'pdfjs-dist': 'pdfjs-dist/legacy/build/pdf',
+      };
+      
       config.module.rules.push({
         test: /pdf\.worker\.(min\.)?js/,
         type: 'asset/resource',

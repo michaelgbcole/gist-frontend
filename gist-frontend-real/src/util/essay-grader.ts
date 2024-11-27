@@ -1,32 +1,21 @@
 import Replicate from "replicate";
+import pdfParse from 'pdf-parse';
 
 async function getPdfText(url: string): Promise<string> {
   try {
-    // Dynamically import pdfjs-dist with webpack ignore
-    const pdfjsLib = await import(/* webpackIgnore: true */ 'pdfjs-dist');
+    // Fetch the PDF data
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Parse the PDF
+    const data = await pdfParse(buffer);
     
-    // Load the PDF document from the URL
-    const loadingTask = pdfjsLib.getDocument(url);
-    const pdfDoc = await loadingTask.promise;
-
-    // Extract text from all pages
-    let pdfText = '';
-    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-      const page = await pdfDoc.getPage(pageNum);
-      const textContent = await page.getTextContent();
-
-      // Combine text from the page into a single string
-      const pageText = textContent.items
-        .map((item: any) => item.str) // Extract text from each item
-        .join(' ');
-
-      pdfText += pageText + '\n';
-    }
-
-    return pdfText.trim();
+    // Return the text content
+    return data.text.trim();
   } catch (error) {
     console.error('Error reading PDF:', error);
-    throw new Error('Failed to read PDF');
+    throw new Error(`Failed to read PDF: ${(error as Error).message}`);
   }
 }
 
