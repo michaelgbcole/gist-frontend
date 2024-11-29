@@ -32,7 +32,6 @@ const navigationItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
     { icon: FileText, label: "Gist Quizzes", path: "/dashboard/quizzes" },
     { icon: Bookmark, label: "Gist Essay Grader", path: "/dashboard/essay-grader" },
-    { icon: FileStack, label: "Rubric Creator", path: "/rubric-creator" },
     { icon: ChartBar, label: "Analysis", path: "/dashboard/analysis" },
 ];
 
@@ -136,11 +135,10 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                         <div className="flex items-center justify-between px-8 py-7">
                             {/* Search Section */}
                             <div className="relative max-w-[438px] w-full">
-                                <Input
+                                <div
                                     className="h-[50px] pl-12 rounded-full bg-white"
-                                    placeholder="Search Quizzes, Rubrics, Essays..."
                                 />
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
                             </div>
 
                             {/* Menu Items Section */}
