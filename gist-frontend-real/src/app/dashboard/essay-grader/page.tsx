@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, DragEvent } from 'react';
 import Frame from "@/components/new-ui/main-frame";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import RubricMaker from '@/components/rubric-creator';
+
 
 interface FileInfo {
   name: string;
@@ -35,6 +36,9 @@ const Grader = () => {
   const [rubricTitles, setRubricsTitles] = useState<string[]>([]);
   const router = useRouter();
   const [isStartable, setIsStartable] = useState<boolean>(true); 
+  const [isDraggingMain, setIsDraggingMain] = useState(false);
+  const [isDraggingExample, setIsDraggingExample] = useState(false);
+  const [exampleFiles, setExampleFiles] = useState<FileInfo[]>([]); 
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,6 +64,64 @@ const Grader = () => {
     }
   }, [userId, batchName]);
 
+  const handleDrag = (e: DragEvent, setDragging: (dragging: boolean) => void) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragging(true);
+    } else if (e.type === "dragleave") {
+      setDragging(false);
+    }
+  };
+
+  const handleDrop = async (e: DragEvent, isExample: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId || !batchName) {
+      toast({
+        title: "Error",
+        description: "Please enter a batch name first",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    setUploading(true);
+    isExample ? setIsDraggingExample(false) : setIsDraggingMain(false);
+  
+    const droppedFiles = Array.from(e.dataTransfer.files);
+  
+    try {
+      for (const file of droppedFiles) {
+        const path = isExample 
+          ? `${userId}/${batchName}/examples/${file.name}`
+          : `${userId}/${batchName}/${file.name}`;
+  
+        const { error } = await supabase.storage
+          .from('essays')
+          .upload(path, file);
+  
+        if (error) throw error;
+      }
+  
+      toast({
+        title: "Success",
+        description: `Files uploaded successfully`,
+      });
+  
+      // Update appropriate file list
+      await fetchFiles(userId, batchName);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload files",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
   const fetchFiles = async (userId: string, batchName: string) => {
     try {
       const response = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}`);
@@ -220,29 +282,65 @@ const Grader = () => {
           />
           <PencilIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6  text-[#00000080]" />
         </div>
-
+        <div className="flex flex-row gap-4 text-center">
         <div>
-          <label htmlFor="file-upload" className="cursor-pointer">
-            <div className="w-full h-[227px] bg-blue-50 border border-dashed border-black rounded flex flex-col items-center justify-center gap-2">
-              <span className="text-3xl font-bold text-[#66666666] tracking-tight">
-                {uploading ? 'Uploading...' : 'Drop files here or click to upload'}
-              </span>
-              {selectedFiles.length > 0 && (
-                <div className="text-sm text-gray-600">
-                  {selectedFiles.length} file(s) selected
-                </div>
-              )}
-            </div>
-          </label>
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileUpload}
-            disabled={uploading || !batchName}
-            accept=".pdf,.doc,.docx,.txt"
-          />
+    <label htmlFor="main-file-upload" className="cursor-pointer">
+      <div 
+        className={`w-full h-[227px] ${isDraggingMain ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+        onDragEnter={(e) => handleDrag(e, setIsDraggingMain)}
+        onDragLeave={(e) => handleDrag(e, setIsDraggingMain)}
+        onDragOver={(e) => handleDrag(e, setIsDraggingMain)}
+        onDrop={(e) => handleDrop(e, false)}
+      >
+        <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+          {uploading ? 'Uploading...' : 'Drop files here or click to upload'}
+        </span>
+        {selectedFiles.length > 0 && (
+          <div className="text-sm text-gray-600">
+            {selectedFiles.length} file(s) selected
+          </div>
+        )}
+      </div>
+    </label>
+    <input
+      id="main-file-upload"
+      type="file"
+      multiple
+      className="hidden"
+      onChange={handleFileUpload}
+      disabled={uploading || !batchName}
+      accept=".pdf,.doc,.docx,.txt"
+    />
+  </div>
+  <div>
+    <label htmlFor="example-file-upload" className="cursor-pointer">
+      <div 
+        className={`w-full h-[227px] ${isDraggingExample ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+        onDragEnter={(e) => handleDrag(e, setIsDraggingExample)}
+        onDragLeave={(e) => handleDrag(e, setIsDraggingExample)}
+        onDragOver={(e) => handleDrag(e, setIsDraggingExample)}
+        onDrop={(e) => handleDrop(e, true)}
+      >
+        <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+          {uploading ? 'Uploading...' : 'Drop files here for example grades'}
+        </span>
+        {exampleFiles.length > 0 && (
+          <div className="text-sm text-gray-600">
+            {exampleFiles.length} file(s) selected
+          </div>
+        )}
+      </div>
+    </label>
+    <input
+      id="example-file-upload"
+      type="file"
+      multiple
+      className="hidden"
+      onChange={(e) => handleFileUpload(e)}
+      disabled={uploading || !batchName}
+      accept=".pdf,.doc,.docx,.txt"
+    />
+  </div>
         </div>
 
         {isStartable ? ( 
