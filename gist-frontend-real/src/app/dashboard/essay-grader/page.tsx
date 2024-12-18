@@ -96,7 +96,7 @@ const Grader = () => {
       for (const file of droppedFiles) {
         const path = isExample 
           ? `${userId}/${batchName}/examples/${file.name}`
-          : `${userId}/${batchName}/${file.name}`;
+          : `${userId}/${batchName}/tograde/${file.name}`;
   
         const { error } = await supabase.storage
           .from('essays')
@@ -110,7 +110,6 @@ const Grader = () => {
         description: `Files uploaded successfully`,
       });
   
-      // Update appropriate file list
       await fetchFiles(userId, batchName);
     } catch (error) {
       toast({
@@ -159,7 +158,24 @@ const Grader = () => {
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const DisplayFileList = ({ files, title }: { files: FileInfo[], title: string }) => {
+    if (files.length === 0) return null;
+    
+    return (
+      <div className="mb-4">
+        <h3 className="font-bold text-lg mb-2">{title}:</h3>
+        <div className="bg-gray-50 p-3 rounded-lg">
+          {files.map((file, index) => (
+            <div key={index} className="text-sm text-gray-600">
+              {file.name}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, isExample: boolean = false) => {
     if (!event.target.files || event.target.files.length === 0 || !userId || !batchName) {
       toast({
         title: "Error",
@@ -168,25 +184,28 @@ const Grader = () => {
       });
       return;
     }
-
+  
     setUploading(true);
     const files = Array.from(event.target.files);
-
+  
     try {
       for (const file of files) {
+        const path = isExample
+          ? `${userId}/${batchName}/examples/${file.name}`
+          : `${userId}/${batchName}/tograde/${file.name}`;
+  
         const { error } = await supabase.storage
           .from('essays')
-          .upload(`${userId}/${batchName}/${file.name}`, file);
-
+          .upload(path, file);
+  
         if (error) throw error;
       }
-
+  
       toast({
         title: "Success",
         description: `Files uploaded successfully`,
       });
-
-      // Refresh file list
+  
       await fetchFiles(userId, batchName);
     } catch (error) {
       toast({
@@ -282,66 +301,72 @@ const Grader = () => {
           />
           <PencilIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6  text-[#00000080]" />
         </div>
-        <div className="flex flex-row gap-4 text-center">
-        <div>
-    <label htmlFor="main-file-upload" className="cursor-pointer">
-      <div 
-        className={`w-full h-[227px] ${isDraggingMain ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
-        onDragEnter={(e) => handleDrag(e, setIsDraggingMain)}
-        onDragLeave={(e) => handleDrag(e, setIsDraggingMain)}
-        onDragOver={(e) => handleDrag(e, setIsDraggingMain)}
-        onDrop={(e) => handleDrop(e, false)}
-      >
-        <span className="text-3xl font-bold text-[#66666666] tracking-tight">
-          {uploading ? 'Uploading...' : 'Drop files here or click to upload'}
-        </span>
-        {selectedFiles.length > 0 && (
-          <div className="text-sm text-gray-600">
-            {selectedFiles.length} file(s) selected
-          </div>
-        )}
-      </div>
-    </label>
-    <input
-      id="main-file-upload"
-      type="file"
-      multiple
-      className="hidden"
-      onChange={handleFileUpload}
-      disabled={uploading || !batchName}
-      accept=".pdf,.doc,.docx,.txt"
-    />
+        <div className="space-y-4">
+  <div className="grid grid-cols-2 gap-4">
+    <DisplayFileList files={selectedFiles} title="Essays to Grade" />
+    <DisplayFileList files={exampleFiles} title="Example Essays" />
   </div>
-  <div>
-    <label htmlFor="example-file-upload" className="cursor-pointer">
-      <div 
-        className={`w-full h-[227px] ${isDraggingExample ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
-        onDragEnter={(e) => handleDrag(e, setIsDraggingExample)}
-        onDragLeave={(e) => handleDrag(e, setIsDraggingExample)}
-        onDragOver={(e) => handleDrag(e, setIsDraggingExample)}
-        onDrop={(e) => handleDrop(e, true)}
-      >
-        <span className="text-3xl font-bold text-[#66666666] tracking-tight">
-          {uploading ? 'Uploading...' : 'Drop files here for example grades'}
-        </span>
-        {exampleFiles.length > 0 && (
-          <div className="text-sm text-gray-600">
-            {exampleFiles.length} file(s) selected
-          </div>
-        )}
-      </div>
-    </label>
-    <input
-      id="example-file-upload"
-      type="file"
-      multiple
-      className="hidden"
-      onChange={(e) => handleFileUpload(e)}
-      disabled={uploading || !batchName}
-      accept=".pdf,.doc,.docx,.txt"
-    />
-  </div>
+  <div className="flex flex-row gap-4 text-center">
+    <div>
+      <label htmlFor="main-file-upload" className="cursor-pointer">
+        <div 
+          className={`w-full h-[227px] ${isDraggingMain ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+          onDragEnter={(e) => handleDrag(e, setIsDraggingMain)}
+          onDragLeave={(e) => handleDrag(e, setIsDraggingMain)}
+          onDragOver={(e) => handleDrag(e, setIsDraggingMain)}
+          onDrop={(e) => handleDrop(e, false)}
+        >
+          <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+            {uploading ? 'Uploading...' : 'Drop files here or click to upload'}
+          </span>
+          {selectedFiles.length > 0 && (
+            <div className="text-sm text-gray-600">
+              {selectedFiles.length} file(s) selected
+            </div>
+          )}
         </div>
+      </label>
+      <input
+        id="main-file-upload"
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileUpload(e, false)}
+        disabled={uploading || !batchName}
+        accept=".pdf,.doc,.docx,.txt"
+      />
+    </div>
+    <div>
+      <label htmlFor="example-file-upload" className="cursor-pointer">
+        <div 
+          className={`w-full h-[227px] ${isDraggingExample ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+          onDragEnter={(e) => handleDrag(e, setIsDraggingExample)}
+          onDragLeave={(e) => handleDrag(e, setIsDraggingExample)}
+          onDragOver={(e) => handleDrag(e, setIsDraggingExample)}
+          onDrop={(e) => handleDrop(e, true)}
+        >
+          <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+            {uploading ? 'Uploading...' : 'Drop files here for example grades'}
+          </span>
+          {exampleFiles.length > 0 && (
+            <div className="text-sm text-gray-600">
+              {exampleFiles.length} file(s) selected
+            </div>
+          )}
+        </div>
+      </label>
+      <input
+        id="example-file-upload"
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => handleFileUpload(e, true)}
+        disabled={uploading || !batchName}
+        accept=".pdf,.doc,.docx,.txt"
+      />
+    </div>
+  </div>
+</div>
 
         {isStartable ? ( 
           <div className="flex justify-end">
