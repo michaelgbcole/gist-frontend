@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 import RubricMaker from '@/components/rubric-creator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ManualGrader from '@/components/manual-grader';
+import { Button } from '@/components/ui/button';
 
 
 interface FileInfo {
@@ -17,7 +20,14 @@ interface FileInfo {
 
 type JSONRUBRIC = {
   title: string;
-}
+  total_points: number;
+  criteria: {
+    name: string;
+    points: number;
+    description: string;
+  }[];
+};
+
 
 interface Rubric {
   id: string;
@@ -33,12 +43,17 @@ const Grader = () => {
   const [rubrics, setRubrics] = useState<Rubric[]>([]);
   const [selectedRubric, setSelectedRubric] = useState<Rubric | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [rubricTitles, setRubricsTitles] = useState<string[]>([]);
+  const [uploadingMain, setUploadingMain] = useState(false);
+  const [uploadingExample, setUploadingExample] = useState(false);
+  const [rubricJSON, setRubricJSON] = useState<string[]>([]);
   const router = useRouter();
   const [isStartable, setIsStartable] = useState<boolean>(true); 
   const [isDraggingMain, setIsDraggingMain] = useState(false);
   const [isDraggingExample, setIsDraggingExample] = useState(false);
   const [exampleFiles, setExampleFiles] = useState<FileInfo[]>([]); 
+  const [isGrading, setIsGrading] = useState(false);
+  const [currentFileToGrade, setCurrentFileToGrade] = useState<string>('');
+  const [exampleGrades, setExampleGrades] = useState<{[key: string]: any}>({});
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +102,7 @@ const Grader = () => {
       return;
     }
   
-    setUploading(true);
+    isExample ? setUploadingExample(true) : setUploadingMain(true);
     isExample ? setIsDraggingExample(false) : setIsDraggingMain(false);
   
     const droppedFiles = Array.from(e.dataTransfer.files);
@@ -118,17 +133,26 @@ const Grader = () => {
         variant: "destructive",
       });
     } finally {
-      setUploading(false);
+      isExample ? setUploadingExample(false) : setUploadingMain(false);
     }
   };
+
   const fetchFiles = async (userId: string, batchName: string) => {
     try {
-      const response = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}`);
-      if (!response.ok) throw new Error('Failed to fetch files');
-      const data = await response.json();
-      const filteredData = data.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
-      setNewFiles(filteredData);
-      setSelectedFiles(filteredData);
+      // Fetch main files
+      const mainResponse = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}&type=tograde`);
+      if (!mainResponse.ok) throw new Error('Failed to fetch main files');
+      const mainData = await mainResponse.json();
+      const filteredMainData = mainData.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
+      setNewFiles(filteredMainData);
+      setSelectedFiles(filteredMainData);
+
+      // Fetch example files
+      const exampleResponse = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}&type=examples`);
+      if (!exampleResponse.ok) throw new Error('Failed to fetch example files');
+      const exampleData = await exampleResponse.json();
+      const filteredExampleData = exampleData.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
+      setExampleFiles(filteredExampleData);
     } catch (error) {
       toast({
         title: "Error",
@@ -147,7 +171,7 @@ const Grader = () => {
       const rubricTitles = data.map((rubric: Rubric) => rubric.rubricJSON);
       console.log('rubric titles', rubricTitles);
       setRubrics(data);
-      setRubricsTitles(rubricTitles);
+      setRubricJSON(rubricTitles);
       console.log('data frrfrfr', rubricTitles)
     } catch (error) {
       toast({
@@ -185,7 +209,7 @@ const Grader = () => {
       return;
     }
   
-    setUploading(true);
+    isExample ? setUploadingExample(true) : setUploadingMain(true);
     const files = Array.from(event.target.files);
   
     try {
@@ -214,7 +238,7 @@ const Grader = () => {
         variant: "destructive",
       });
     } finally {
-      setUploading(false);
+      isExample ? setUploadingExample(false) : setUploadingMain(false);
     }
   };
 
@@ -268,6 +292,46 @@ const Grader = () => {
     }
   };
 
+  const isReadyToStart = () => {
+    const requirements = {
+      batchName: !!batchName?.trim(),
+      rubric: !!selectedRubric,
+      files: selectedFiles.length > 0,
+      exampleGrades: exampleFiles.length === 0 || // No example files uploaded
+                    (exampleFiles.length > 0 && 
+                     exampleFiles.every(file => exampleGrades[file.name])) // All example files graded
+    };
+    
+    return requirements;
+  };
+
+  const getMissingRequirements = () => {
+    const requirements = isReadyToStart();
+    const missing = [];
+    
+    if (!requirements.batchName) missing.push("Batch name");
+    if (!requirements.rubric) missing.push("Rubric selection");
+    if (!requirements.files) missing.push("At least one file to grade");
+    if (!requirements.exampleGrades) {
+      const ungradedCount = exampleFiles.filter(file => !exampleGrades[file.name]).length;
+      missing.push(`${ungradedCount} example ${ungradedCount === 1 ? 'essay needs' : 'essays need'} grading`);
+    }
+    
+    return missing;
+  };
+
+  const handleExampleGrade = (fileName: string) => {
+    setCurrentFileToGrade(fileName);
+    setIsGrading(true);
+  };
+
+  const handleGradeSubmit = (grades: any) => {
+    setExampleGrades(prev => ({
+      ...prev,
+      [currentFileToGrade]: grades
+    }));
+  };
+
   return (
     <Frame>
       <Card className="w-full max-w-4xl p-5 space-y-5">
@@ -303,26 +367,64 @@ const Grader = () => {
         </div>
         <div className="space-y-4">
   <div className="grid grid-cols-2 gap-4">
-    <DisplayFileList files={selectedFiles} title="Essays to Grade" />
-    <DisplayFileList files={exampleFiles} title="Example Essays" />
-  </div>
-  <div className="flex flex-row gap-4 text-center">
     <div>
-      <label htmlFor="main-file-upload" className="cursor-pointer">
+      <h3 className="font-bold text-lg mb-2">Example Essays:</h3>
+      <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+        {exampleFiles.map((file, index) => (
+          <div 
+            key={index} 
+            className="flex justify-between items-center text-sm text-gray-600 p-2 hover:bg-gray-100 rounded-md"
+          >
+            <span className="truncate mr-4 flex-1">{file.name}</span>
+            <Button
+              onClick={() => handleExampleGrade(file.name)}
+              className={`min-w-[80px] ${
+                exampleGrades[file.name] 
+                  ? "bg-green-500 hover:bg-green-600 text-white" 
+                  : "bg-[#85e0a3] hover:bg-[#75d093]"
+              }`}
+            >
+              {exampleGrades[file.name] ? "Graded" : "Grade"}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+  <div className="flex flex-row gap-4 text-center h-[227px]">
+    <div className="flex-1">
+      <label htmlFor="main-file-upload" className="cursor-pointer h-full block">
         <div 
-          className={`w-full h-[227px] ${isDraggingMain ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+          className={`w-full h-full ${isDraggingMain ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2 p-4 relative`}
           onDragEnter={(e) => handleDrag(e, setIsDraggingMain)}
           onDragLeave={(e) => handleDrag(e, setIsDraggingMain)}
           onDragOver={(e) => handleDrag(e, setIsDraggingMain)}
           onDrop={(e) => handleDrop(e, false)}
         >
-          <span className="text-3xl font-bold text-[#66666666] tracking-tight">
-            {uploading ? 'Uploading...' : 'Drop files here or click to upload'}
-          </span>
-          {selectedFiles.length > 0 && (
-            <div className="text-sm text-gray-600">
-              {selectedFiles.length} file(s) selected
-            </div>
+          {uploadingMain ? (
+            <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+              Uploading...
+            </span>
+          ) : selectedFiles.length > 0 ? (
+            <>
+              <span className="text-2xl font-bold text-[#66666666] tracking-tight mb-2">
+                Essays to Grade
+              </span>
+              <div className="text-sm text-gray-600 w-full overflow-y-auto max-h-[120px] scrollbar-thin scrollbar-thumb-gray-300">
+                <div className="space-y-1 px-2">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="truncate">{file.name}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="absolute bottom-3 text-sm text-gray-500">
+                {selectedFiles.length} file(s) selected
+              </div>
+            </>
+          ) : (
+            <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+              Drop files to grade here
+            </span>
           )}
         </div>
       </label>
@@ -332,26 +434,43 @@ const Grader = () => {
         multiple
         className="hidden"
         onChange={(e) => handleFileUpload(e, false)}
-        disabled={uploading || !batchName}
+        disabled={uploadingMain || uploadingExample || !batchName}
         accept=".pdf,.doc,.docx,.txt"
       />
     </div>
-    <div>
-      <label htmlFor="example-file-upload" className="cursor-pointer">
+    <div className="flex-1">
+      <label htmlFor="example-file-upload" className="cursor-pointer h-full block">
         <div 
-          className={`w-full h-[227px] ${isDraggingExample ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2`}
+          className={`w-full h-full ${isDraggingExample ? 'bg-blue-100' : 'bg-blue-50'} border border-dashed border-black rounded flex flex-col items-center justify-center gap-2 p-4 relative`}
           onDragEnter={(e) => handleDrag(e, setIsDraggingExample)}
           onDragLeave={(e) => handleDrag(e, setIsDraggingExample)}
           onDragOver={(e) => handleDrag(e, setIsDraggingExample)}
           onDrop={(e) => handleDrop(e, true)}
         >
-          <span className="text-3xl font-bold text-[#66666666] tracking-tight">
-            {uploading ? 'Uploading...' : 'Drop files here for example grades'}
-          </span>
-          {exampleFiles.length > 0 && (
-            <div className="text-sm text-gray-600">
-              {exampleFiles.length} file(s) selected
-            </div>
+          {uploadingExample ? (
+            <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+              Uploading...
+            </span>
+          ) : exampleFiles.length > 0 ? (
+            <>
+              <span className="text-2xl font-bold text-[#66666666] tracking-tight mb-2">
+                Example Essays
+              </span>
+              <div className="text-sm text-gray-600 w-full overflow-y-auto max-h-[120px] scrollbar-thin scrollbar-thumb-gray-300">
+                <div className="space-y-1 px-2">
+                  {exampleFiles.map((file, index) => (
+                    <div key={index} className="truncate">{file.name}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="absolute bottom-3 text-sm text-gray-500">
+                {exampleFiles.length} file(s) selected
+              </div>
+            </>
+          ) : (
+            <span className="text-3xl font-bold text-[#66666666] tracking-tight">
+              Drop example files here
+            </span>
           )}
         </div>
       </label>
@@ -361,35 +480,52 @@ const Grader = () => {
         multiple
         className="hidden"
         onChange={(e) => handleFileUpload(e, true)}
-        disabled={uploading || !batchName}
+        disabled={uploadingMain || uploadingExample || !batchName}
         accept=".pdf,.doc,.docx,.txt"
       />
     </div>
   </div>
 </div>
 
-        {isStartable ? ( 
-          <div className="flex justify-end">
-          <Card 
-            onClick={handleStartBatch}
-            className="w-[282px] h-[82px] bg-[#85e0a3] rounded-[9.59px] border border-black shadow-md flex items-center justify-center gap-4 cursor-pointer hover:bg-[#75d093] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-[#333333] text-4xl font-bold tracking-tight">
-              Start
-            </span>
-            <WandIcon className="h-12 w-12 text-[#333333]" />
-          </Card>
-        </div> ) : (
-          <div className="flex justify-end">
-          <Card
-            className="w-[282px] h-[82px] bg-[#427152] rounded-[9.59px] border border-black shadow-md flex items-center justify-center gap-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span className="text-[#333333] text-4xl font-bold tracking-tight">
-              Start
-            </span>
-            <WandIcon className="h-12 w-12 text-[#333333]" />
-          </Card>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex justify-end">
+                <Card 
+                  onClick={handleStartBatch}
+                  className={`w-[282px] h-[82px] ${
+                    Object.values(isReadyToStart()).every(Boolean)
+                      ? "bg-[#85e0a3] hover:bg-[#75d093] cursor-pointer"
+                      : "bg-[#cccccc] cursor-not-allowed"
+                  } rounded-[9.59px] border border-black shadow-md flex items-center justify-center gap-4 transition-colors`}
+                >
+                  <span className="text-[#333333] text-4xl font-bold tracking-tight">
+                    Start
+                  </span>
+                  <WandIcon className="h-12 w-12 text-[#333333]" />
+                </Card>
+              </div>
+            </TooltipTrigger>
+            {getMissingRequirements().length > 0 && (
+              <TooltipContent>
+                <p>Missing requirements:</p>
+                <ul className="list-disc pl-4">
+                  {getMissingRequirements().map((req, index) => (
+                    <li key={index}>{req}</li>
+                  ))}
+                </ul>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        {selectedRubric && (
+          <ManualGrader
+            isOpen={isGrading}
+            onClose={() => setIsGrading(false)}
+            onSubmit={handleGradeSubmit}
+            rubric={selectedRubric.rubricJSON}
+            currentFile={currentFileToGrade}
+          />
         )}
       </Card>
     </Frame>

@@ -73,7 +73,7 @@ export default function Quickview({ essays, maxHeight = "600px", onDetailsClick 
                       className="w-[35px] h-[35px] rounded-full flex-shrink-0 flex items-center justify-center text-white text-xl font-bold"
                       style={{ backgroundColor: bgColor }}
                     >
-                      {essay.id}
+                      {index +1}
                     </Badge>
                     <span className="font-bold text-base text-[#000000cc] truncate">
                       {essay.title}

@@ -15,7 +15,7 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { userId, batchName } = req.query;
+    const { userId, batchName, type } = req.query;
 
     if (!userId || typeof userId !== 'string') {
         return res.status(400).json({ error: 'User ID is required' });
@@ -25,21 +25,24 @@ export default async function handler(
         return res.status(400).json({ error: 'Batch name is required' });
     }
 
+    if (!type || typeof type !== 'string') {
+        return res.status(400).json({ error: 'Type is required' });
+    }
+
     try {
-        // List all files in the user's folder
-        console.log(batchName)
+        // List all files in the specific folder (tograde or examples)
         const { data: files, error } = await supabase.storage
-            .from(`essays`)
-            .list(`${userId}/${batchName}`);
+            .from('essays')
+            .list(`${userId}/${batchName}/${type}`);
     
         if (error) throw error;
-        console.log('files:', files.length);
+
         // Get public URLs for each file
         const filesWithUrls = await Promise.all(
-            files.map(async (file) => {
+            (files || []).map(async (file) => {
                 const { data: { publicUrl } } = supabase.storage
                     .from('essays')
-                    .getPublicUrl(`${userId}/${batchName}/${file.name}`);
+                    .getPublicUrl(`${userId}/${batchName}/${type}/${file.name}`);
 
                 return {
                     name: file.name,
