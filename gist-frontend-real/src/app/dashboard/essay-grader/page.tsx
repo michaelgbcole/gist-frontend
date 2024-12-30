@@ -272,6 +272,8 @@ const Grader = () => {
         },
         body: JSON.stringify({
           selectedFiles,
+          exampleFiles,
+          exampleGrades,
           rubricId: selectedRubric.id,
           batchName,
           userId,
