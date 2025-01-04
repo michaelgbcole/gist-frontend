@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
-    const { selectedFiles, rubricId, batchName, userId } = req.body;
+    const { selectedFiles, exampleFiles, exampleGrades, rubricId, batchName, userId } = req.body;
     const fileUrls = selectedFiles.map((file: any) => file.url);
     console.log('fileUrls:', fileUrls);
     try {
@@ -20,13 +20,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('batch:', batch);
         
 
-          const gradeEssayRequest = async (fileUrl: string) => {
+          const gradeEssayRequest = async (fileUrl: string, exampleFiles: any, exampleGrades: any) => {
             const response = await fetch(`${process.env.HOSTED_URL}/api/grade-essay`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ pdfUrl: fileUrl, rubricId, userId, batchId: batch.id }),
+              body: JSON.stringify({ pdfUrl: fileUrl, rubricId, userId, batchId: batch.id, exampleFiles, exampleGrades }),
             });
     
             if (!response.ok) {
@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
           // Send concurrent requests to grade-essay
           const gradingResults = await Promise.all(
-            fileUrls.map((fileUrl: string) => gradeEssayRequest(fileUrl))
+            fileUrls.map((fileUrl: string) => gradeEssayRequest(fileUrl, exampleFiles, exampleGrades))
           );
     
           // Return the batch ID and grading results

@@ -1,17 +1,12 @@
-import Replicate from "replicate";
 import pdfParse from 'pdf-parse';
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 
 async function getPdfText(url: string): Promise<string> {
   try {
-    // Fetch the PDF data
     const response = await fetch(url);
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-
-    // Parse the PDF
     const data = await pdfParse(buffer);
-    
-    // Return the text content
     return data.text.trim();
   } catch (error) {
     console.error('Error reading PDF:', error);
@@ -19,20 +14,14 @@ async function getPdfText(url: string): Promise<string> {
   }
 }
 
-const replicate = new Replicate();
-async function checkPredictionStatus(prediction_id: string): Promise<any> {
-    while (true) {
-        const prediction_status = await replicate.predictions.get(prediction_id);
-        if (prediction_status.status === "succeeded") {
-            console.log('prediction_status', prediction_status)
-            return prediction_status.output as string;
-        } else if (prediction_status.status === "failed") {
-            throw new Error("Prediction failed");
-        }
-        // Wait for a short period before checking again
-        await new Promise(resolve => setTimeout(resolve, 2000));
+const bedrock = new BedrockRuntimeClient({ 
+    region: "us-east-1",
+    // Make sure your credentials are properly configured
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
     }
-}
+});
 
 export default async function gradeEssay(essayPublicUrl: string, rubric: string): Promise<string> {
     console.log('essayPublicUrlrealrealreal', essayPublicUrl)
@@ -40,21 +29,43 @@ export default async function gradeEssay(essayPublicUrl: string, rubric: string)
     console.log('essayText', essayText)
 
     console.log('grading')
-    const input = {
-        top_p: 0.9,
-        prompt: `This is the teacher's ${rubric}:  This is the student's essay: ${essayText}.`,
-        system_prompt: `<personality>You are a 25-year teacher who is renowned for your detail orrientated nature when grading others' papers. When working, you have an abundance of time and always consider both the student and teacher perspective.</personality><instructions>Your whole output should be in valid XML, which means characters like apostrophes, quotes, and ampersands must be properly escaped. Read these instructions very carefully, and do not miss any steps. If you do miss any steps, you will be fired, and your family will starve to death, or will be forced to cannibalize eachother. Make sure to enclose the whole output in <output> tags, and end with <overallFeedback> In <thinking> tags, consider the teacher's rubric, and use it as guidelines detailing what you want to see in the student's essay. Return the score for each category of the rubric in <criteriaFeedback> tags. Inside of the <criteriaFeedback> tags write valid JSON. It should be structured like {"example_criteria": {"feedback": "insert_feedback_here", "score": "score/total_for_criteria"}}, keeping in mind the total possible score for each criteria. Return the fraction of points_scored / total_points on rubric in <finalScore> tags, and make sure to only return this fraction within these tags. Additionally write in <overallFeedback> tags a general summary of the essay, as well general feedback regxarding the rubric in contrast with the essay.</instructions>`,
-        min_tokens: 0,
-        temperature: 0.3,
-        presence_penalty: 1.15,
-        max_tokens: 100000,
+    const prompt = {
+        prompt: `[INST]You are a 25-year teacher grading papers. Grade this essay using the provided rubric.
+
+Rubric:
+${rubric}
+
+Essay:
+${essayText}
+
+Return your response in this XML format:
+<output>
+<thinking>Detailed analysis of rubric requirements</thinking>
+<criteriaFeedback>{"criteria_name": {"feedback": "feedback_text", "score": "score/total"}}</criteriaFeedback>
+<finalScore>points/total</finalScore>
+<overallFeedback>General essay feedback and summary</overallFeedback>
+</output>[/INST]`,
     };
 
-    const prediction = await replicate.predictions.create({
-        model: "meta/meta-llama-3.1-405b-instruct",
-        input
-    });
-    const res = await checkPredictionStatus(prediction.id);
-    console.log('res::', res.join(''))
-    return res.join('');
+    const params = {
+        modelId: "arn:aws:bedrock:us-east-1:954976296594:inference-profile/us.meta.llama3-3-70b-instruct-v1:0",  // Update with your config name
+        contentType: "application/json",
+        accept: "application/json",
+        body: JSON.stringify({
+            prompt: prompt.prompt,
+            max_gen_len: 512,
+            temperature: 0.5,
+            top_p: 0.9
+        })
+    };
+
+    try {
+        const command = new InvokeModelCommand(params);
+        const response = await bedrock.send(command);
+        const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+        return responseBody.completion;
+    } catch (error) {
+        console.error('Error calling Bedrock:', error);
+        throw error;
+    }
 }
