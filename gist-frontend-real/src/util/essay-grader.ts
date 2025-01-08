@@ -48,14 +48,20 @@ Return your response in this XML format:
     };
 
     const params = {
-        modelId: "arn:aws:bedrock:us-east-1:954976296594:inference-profile/us.meta.llama3-3-70b-instruct-v1:0",  // Update with your config name
+        modelId: "anthropic.claude-3-sonnet-20240229-v1:0",
         contentType: "application/json",
         accept: "application/json",
         body: JSON.stringify({
-            prompt: prompt.prompt,
-            max_gen_len: 512,
+            anthropic_version: "bedrock-2023-05-31",
+            max_tokens: 4096,
             temperature: 0.5,
-            top_p: 0.9
+            top_p: 0.9,
+            messages: [
+                {
+                    role: "user",
+                    content: prompt.prompt
+                }
+            ]
         })
     };
 
@@ -63,9 +69,19 @@ Return your response in this XML format:
         const command = new InvokeModelCommand(params);
         const response = await bedrock.send(command);
         const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-        return responseBody.completion;
+        
+        // Handle different response formats
+        if (responseBody.content?.[0]?.text) {
+            return responseBody.content[0].text;
+        } else if (responseBody.completion) {
+            return responseBody.completion;
+        } else if (responseBody.generations?.[0]?.text) {
+            return responseBody.generations[0].text;
+        } else {
+            throw new Error('Unexpected response format from model');
+        }
     } catch (error) {
         console.error('Error calling Bedrock:', error);
-        throw error;
+        throw new Error(`Failed to grade essay: ${(error as Error).message}`);
     }
 }

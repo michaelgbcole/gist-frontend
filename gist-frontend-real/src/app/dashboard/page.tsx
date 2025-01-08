@@ -12,6 +12,25 @@ import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
 import FilledRubric from '@/components/new-ui/filled-rubric';
 import Quickview from '@/components/new-ui/quick-view';
+import PerformanceChart from '@/components/new-ui/charts/line-graph';
+
+interface StudentAssignment {
+    assignmentId: string;
+    grade: number;
+    rubricId: string;
+    date?: string; // You might want to add this to your input data
+    rubricData: {
+      [criteria: string]: number;  // e.g., grammar: 0.59
+    };
+  }
+  
+  interface StudentData {
+    id: string;
+    name: string;
+    class: string;
+    assignmentData: StudentAssignment[];
+  }
+
 
 type PrismaUser = {
     id: string;
@@ -50,6 +69,8 @@ const Dashboard = () => {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [batches, setBatches] = useState<Batch[]>([]);
+    const [studentData, setStudentData] = useState<StudentData[]>([]);
+    const [loadingChart, setLoadingChart] = useState(true);
 
     useEffect(() => {
         const getUser = async () => {
@@ -74,6 +95,33 @@ const Dashboard = () => {
         fetchBatches();
     }, [user]);
 
+    useEffect(() => {
+        const fetchAllData = async () => {
+            if (user?.id) {
+                try {
+                    setLoadingChart(true);
+                    const response = await fetch('/api/get-all-student-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ userId: user.id }),
+                    });
+
+                    if (response.ok) {
+                        const { studentData } = await response.json();
+                        setStudentData(studentData);
+                    }
+                } catch (error) {
+                    console.error('Error fetching student data:', error);
+                } finally {
+                    setLoadingChart(false);
+                }
+            }
+        };
+
+        fetchAllData();
+    }, [user?.id]);
 
     const fetchBatches = async () => {
         if (user?.id) {
@@ -143,7 +191,7 @@ const Dashboard = () => {
         <AuthWrapper>
             <Frame>
                 <div className='flex gap-4 p-4'>
-                    <Quickview 
+                    {/* <Quickview 
                         essays={batches} 
                         onDetailsClick={(essayId) => {
                             const batch = batches.find(b => b.id === essayId);
@@ -151,6 +199,10 @@ const Dashboard = () => {
                                 handleDetailsClick(essayId);
                             }
                         }}
+                    /> */}
+                    <PerformanceChart 
+                        data={studentData} 
+                        loading={loadingChart}
                     />
                 </div>
             </Frame>

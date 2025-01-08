@@ -86,11 +86,18 @@ model Batch {
   overallFeedback String?
 }
 
-model Classroom {
+model Class {
   id Int @id @default(autoincrement())
   name String
+  description String
   teacherId String
-  formIds Int[]
-  batchIds Int[]
   overallFeedback String?
+  studentIds String[]
+}
+
+model Student {
+  id String @id @default(uuid())
+  name String
+  email String
+  classId Int
 }

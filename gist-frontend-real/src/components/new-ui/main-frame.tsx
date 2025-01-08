@@ -18,6 +18,7 @@ import {
     Home,
     LogOut,
     ChartBar,
+    PersonStanding,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ const navigationItems = [
     { icon: FileText, label: "Gist Quizzes", path: "/dashboard/quizzes" },
     { icon: Bookmark, label: "Gist Essay Grader", path: "/dashboard/essay-grader" },
     { icon: ChartBar, label: "Analysis", path: "/dashboard/analysis" },
+    { icon: PersonStanding, label: "Class Manager", path: "/dashboard/classes" },
 ];
 
 type FrameProps = {
@@ -108,13 +110,14 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                         <NavigationMenuList className="flex flex-col space-y-4 p-4 w-full mt-6">
                             {navigationItems.map((item, index) => (
                                 <NavigationMenuItem key={index} className="w-full">
-                                    <Link href={item.path} passHref>
+                                    <Link href={item.path} passHref legacyBehavior>
                                         <NavigationMenuLink
                                             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors w-full ${
                                                 pathname === item.path
                                                     ? "text-[#8b5dff] bg-blue-50 border-l-4 border-[#8b5dff]"
                                                     : "text-[#8a8a8a] hover:bg-gray-100 whitespace-nowrap"
                                             }`}
+                                            onClick={(e) => e.preventDefault()}
                                         >
                                             <item.icon
                                                 className={`w-6 h-6 flex-shrink-0 ${
