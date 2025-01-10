@@ -74,6 +74,7 @@ model Grade {
   batchId Int
   rubricData String
   overall_feedback String?
+  createdAt DateTime @default(now()) // Add this line
 }
 
 model Batch {

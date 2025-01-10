@@ -117,38 +117,38 @@ const Grader = () => {
   }, [userId, batchName]);
 
   useEffect(() => {
-    // Comment out the API fetch and replace with mock data
-    setClasses(mockClassData);
-    /* Comment out the actual API call for now
-    const fetchClassData = async () => {
-      if (userId) {
-        try {
-          const response = await fetch('/api/get-all-class-data', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ teacherId: userId }),
-          });
-  
-          if (response.ok) {
-            const { classes } = await response.json();
-            setClasses(classes);
-          }
-        } catch (error) {
-          console.error('Error fetching class data:', error);
-          toast({
-            title: "Error",
-            description: "Failed to fetch class data",
-            variant: "destructive",
-          });
-        }
+    const fetchClasses = async () => {
+      if (!userId) return;
+      
+      try {
+        const response = await fetch('/api/get-classes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ teacherId: userId }),
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch classes');
+        const data = await response.json();
+        setClasses(data.classes);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load classes",
+          variant: "destructive",
+        });
       }
     };
-  
-    fetchClassData();
-    */
+
+    fetchClasses();
   }, [userId]);
+
+  const handleClassSelect = (classId: string) => {
+    setSelectedClass(classId);
+    // Clear existing file assignments when changing class
+    setFileAssignments({});
+  };
 
   const handleDrag = (e: DragEvent, setDragging: (dragging: boolean) => void) => {
     e.preventDefault();
@@ -435,13 +435,13 @@ const Grader = () => {
         {/* Keep the class selector for context, but remove the student selector */}
         <div className="flex gap-4">
           <div className="flex-1">
-            <Select value={selectedClass} onValueChange={setSelectedClass}>
+            <Select value={selectedClass} onValueChange={handleClassSelect}>
               <SelectTrigger className="h-20 bg-[#bba8ff] rounded-lg shadow-md flex items-center justify-start px-6 gap-4">
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
               <SelectContent>
                 {classes.map((classData) => (
-                  <SelectItem key={classData.id} value={classData.id}>
+                  <SelectItem key={classData.id} value={classData.id.toString()}>
                     {classData.name}
                   </SelectItem>
                 ))}
@@ -502,7 +502,7 @@ const Grader = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {classes
-                          .find(c => c.id === selectedClass)
+                          .find(c => c.id.toString() === selectedClass)
                           ?.students.map((student) => (
                             <SelectItem key={student.id} value={student.id}>
                               {student.name}

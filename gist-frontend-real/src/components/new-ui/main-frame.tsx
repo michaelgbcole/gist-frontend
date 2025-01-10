@@ -111,19 +111,18 @@ export default function Frame({ children }: FrameProps): JSX.Element {
                             {navigationItems.map((item, index) => (
                                 <NavigationMenuItem key={index} className="w-full">
                                     <Link href={item.path} passHref legacyBehavior>
-                                        <NavigationMenuLink
-                                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors w-full ${
-                                                pathname === item.path
-                                                    ? "text-[#8b5dff] bg-blue-50 border-l-4 border-[#8b5dff]"
-                                                    : "text-[#8a8a8a] hover:bg-gray-100 whitespace-nowrap"
-                                            }`}
-                                            onClick={(e) => e.preventDefault()}
-                                        >
-                                            <item.icon
-                                                className={`w-6 h-6 flex-shrink-0 ${
-                                                    pathname === item.path ? "text-[#8b5dff]" : "text-[#8a8a8a]"
-                                                }`}
-                                            />
+                                    <NavigationMenuLink
+                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors w-full ${
+                            pathname === item.path
+                                ? "text-[#8b5dff] bg-blue-50 border-l-4 border-[#8b5dff]"
+                                : "text-[#8a8a8a] hover:bg-gray-100 whitespace-nowrap"
+                        }`}
+                    >
+                        <item.icon
+                            className={`w-6 h-6 flex-shrink-0 ${
+                                pathname === item.path ? "text-[#8b5dff]" : "text-[#8a8a8a]"
+                            }`}
+                        />
                                             <span className="font-bold text-xl">{item.label}</span>
                                         </NavigationMenuLink>
                                     </Link>
