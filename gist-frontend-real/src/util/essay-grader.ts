@@ -30,25 +30,26 @@ export default async function gradeEssay(essayPublicUrl: string, rubric: string)
 
     console.log('grading')
     const prompt = {
-        prompt: `[INST]You are a 25-year teacher grading papers. Grade this essay using the provided rubric.
+        prompt: `You are a 25-year teacher grading papers. Grade this essay using the provided rubric.
 
 Rubric:
 ${rubric}
 
 Essay:
 ${essayText}
+[INST]<personality>You are a 25-year teacher who is renowned for your detail orrientated nature when grading others' papers. When working, you have an abundance of time and always consider both the student and teacher perspective.</personality><instructions>Your whole output should be in valid XML, which means characters like apostrophes, quotes, and ampersands must be properly escaped. Read these instructions very carefully, and do not miss any steps. If you do miss any steps, you will be fired, and your family will starve to death, or will be forced to cannibalize eachother. Make sure to enclose the whole output in <output> tags, and end with <overallFeedback> In <thinking> tags, consider the teacher's rubric, and use it as guidelines detailing what you want to see in the student's essay. Return the score for each category of the rubric in <criteriaFeedback> tags. Inside of the <criteriaFeedback> tags write valid JSON. It should be structured like {"example_criteria": {"feedback": "insert_feedback_here", "score": "score/total_for_criteria"}}, keeping in mind the total possible score for each criteria. Return the fraction of points_scored / total_points on rubric in <finalScore> tags, and make sure to only return this fraction within these tags. Additionally write in <overallFeedback> tags a general summary of the essay, as well general feedback regxarding the rubric in contrast with the essay.</instructions>[/INST]
+Rubric:
+${rubric}
 
-Return your response in this XML format:
-<output>
-<thinking>Detailed analysis of rubric requirements</thinking>
-<criteriaFeedback>{"criteria_name": {"feedback": "feedback_text", "score": "score/total"}}</criteriaFeedback>
-<finalScore>points/total</finalScore>
-<overallFeedback>General essay feedback and summary</overallFeedback>
-</output>[/INST]`,
-    };
+Essay:
+${essayText}
+`,
+   
+
+};
 
     const params = {
-        modelId: "anthropic.claude-3-sonnet-20240229-v1:0",
+        modelId: "arn:aws:bedrock:us-east-1:954976296594:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0", // Use the ARN from your inference profile
         contentType: "application/json",
         accept: "application/json",
         body: JSON.stringify({

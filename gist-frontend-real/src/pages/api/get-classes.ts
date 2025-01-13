@@ -25,19 +25,28 @@ export default async function handler(
       }
     });
 
+    // Get all student IDs from all classes
+    const allStudentIds = classes.flatMap(c => c.studentIds);
+
+    // Get all students in one query
+    const allStudents = await prisma.student.findMany({
+      where: {
+        id: {
+          in: allStudentIds
+        }
+      }
+    });
+
+    // Create student lookup map
+    const studentLookup = allStudents.reduce((acc, student) => {
+      acc[student.id] = student.name;
+      return acc;
+    }, {} as Record<string, string>);
+
     // Then, for each class, get its students
     const classesWithStudents = await Promise.all(
       classes.map(async (classItem) => {
-        const students = await prisma.student.findMany({
-          where: {
-            classId: classItem.id
-          },
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        });
+        const students = allStudents.filter(s => s.classId === classItem.id);
 
         return {
           id: classItem.id,
@@ -51,7 +60,8 @@ export default async function handler(
     );
 
     return res.status(200).json({
-      classes: classesWithStudents
+      classes: classesWithStudents,
+      studentLookup // Add this to the response
     });
 
   } catch (error) {

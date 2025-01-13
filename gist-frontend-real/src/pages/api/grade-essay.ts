@@ -11,7 +11,8 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const parser = new DOMParser();
-    const { pdfUrl, rubricId, userId, batchId } = req.body;
+    const { pdfUrl, rubricId, userId, batchId, studentId } = req.body;
+    console.log('student id:', studentId);
     console.log('pdf-url:', pdfUrl);
     console.log(req.body)
     const rubric = await prisma.rubric.findFirst({
@@ -34,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const grade = await prisma.grade.create({
             data: {
                 userId: userId,
+                studentId: studentId,
                 rubricId: rubricId,
                 score: parsedResult?.getElementsByTagName('finalScore')[0].textContent ?? '',
                 fileName: fileName,

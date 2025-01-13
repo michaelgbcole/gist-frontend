@@ -13,6 +13,7 @@ export default async function handler(
 
   try {
     const { userId, name } = req.body;
+    console.log("attempting to create a batch!!")
 
     const batch = await prisma.batch.create({
       data: {

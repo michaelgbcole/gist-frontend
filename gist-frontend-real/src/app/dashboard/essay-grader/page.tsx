@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 interface FileInfo {
   name: string;
   assignedStudent?: string; // Add this to track student assignment
+  batchId?: string;
+  batchName?: string;
 }
 
 type JSONRUBRIC = {
@@ -33,6 +35,9 @@ interface ClassData {
   id: string;
   name: string;
   students: StudentData[];
+  description: string;
+  studentCount: number;
+  overallFeedback?: string;
 }
 
 interface StudentData {
@@ -44,28 +49,6 @@ interface Rubric {
   id: string;
   rubricJSON: JSONRUBRIC;
 }
-
-// Add this mock data near the top of the file, after interfaces
-const mockClassData: ClassData[] = [
-  {
-    id: "class1",
-    name: "English 101",
-    students: [
-      { id: "s1", name: "John Smith" },
-      { id: "s2", name: "Emma Wilson" },
-      { id: "s3", name: "Michael Brown" },
-    ]
-  },
-  {
-    id: "class2",
-    name: "Creative Writing",
-    students: [
-      { id: "s4", name: "Sarah Johnson" },
-      { id: "s5", name: "David Lee" },
-      { id: "s6", name: "Lisa Anderson" },
-    ]
-  }
-];
 
 const Grader = () => {
   const { toast } = useToast();
@@ -91,6 +74,8 @@ const Grader = () => {
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [fileAssignments, setFileAssignments] = useState<Record<string, string>>({});
+  const [batchId, setBatchId] = useState<string>('');  // Add this state
+  const [studentLookup, setStudentLookup] = useState<Record<string, string>>({});
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -108,13 +93,20 @@ const Grader = () => {
     fetchCurrentUser();
   }, []);
 
+  // Remove or modify this useEffect that's causing the issue
   useEffect(() => {
     if (userId) {
-      console.log('trying')
-      fetchFiles(userId, batchName);
+      // Remove the fetchFiles call here since it shouldn't fetch on batchName change
       fetchRubrics(userId);
     }
-  }, [userId, batchName]);
+  }, [userId]); // Remove batchName from dependencies
+
+  // Only fetch files when we have a valid batchId
+  useEffect(() => {
+    if (userId && batchId) {
+      fetchFiles(userId, batchId);
+    }
+  }, [userId, batchId]);
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -126,13 +118,18 @@ const Grader = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ teacherId: userId }),
+          body: JSON.stringify({
+            teacherId: userId
+          }),
         });
-
         if (!response.ok) throw new Error('Failed to fetch classes');
+        
         const data = await response.json();
-        setClasses(data.classes);
+        console.log('Fetched classes:', data);
+        setClasses(data.classes || []);
+        setStudentLookup(data.studentLookup || {});
       } catch (error) {
+        console.error('Error fetching classes:', error);
         toast({
           title: "Error",
           description: "Failed to load classes",
@@ -179,10 +176,28 @@ const Grader = () => {
     const droppedFiles = Array.from(e.dataTransfer.files);
   
     try {
+      // Create new batch if doesn't exist
+      if (!batchId) {
+        const batchResponse = await fetch('/api/create-batch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            name: batchName,
+          }),
+        });
+
+        if (!batchResponse.ok) throw new Error('Failed to create batch');
+        const { batchId: newBatchId } = await batchResponse.json();
+        setBatchId(newBatchId);
+      }
+
       for (const file of droppedFiles) {
         const path = isExample 
-          ? `${userId}/${batchName}/examples/${file.name}`
-          : `${userId}/${batchName}/tograde/${file.name}`;
+          ? `${userId}/${batchId}/examples/${file.name}`
+          : `${userId}/${batchId}/tograde/${file.name}`;
   
         const { error } = await supabase.storage
           .from('essays')
@@ -196,7 +211,7 @@ const Grader = () => {
         description: `Files uploaded successfully`,
       });
   
-      await fetchFiles(userId, batchName);
+      await fetchFiles(userId, batchId);
     } catch (error) {
       toast({
         title: "Error",
@@ -208,10 +223,57 @@ const Grader = () => {
     }
   };
 
-  const fetchFiles = async (userId: string, batchName: string) => {
+  const createBatch = async () => {
+    if (!batchName || !userId) {
+      toast({
+        title: "Error",
+        description: "Please enter a batch name",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      const response = await fetch('/api/create-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          name: batchName,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create batch');
+      const { batchId: newBatchId } = await response.json();
+      setBatchId(newBatchId);
+      toast({
+        title: "Success",
+        description: "Batch created successfully",
+      });
+      
+      // Clear any existing files when creating a new batch
+      setNewFiles([]);
+      setSelectedFiles([]);
+      setExampleFiles([]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create batch",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Update the fetchFiles function to use batchId
+  const fetchFiles = async (userId: string, batchId: string) => {
+    if (!batchId) return;
+    
+    try {
+      console.log('Fetching files for batch:', batchId);
       // Fetch main files
-      const mainResponse = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}&type=tograde`);
+      const mainResponse = await fetch(`/api/get-essays?userId=${userId}&batchId=${batchId}&type=tograde`);
       if (!mainResponse.ok) throw new Error('Failed to fetch main files');
       const mainData = await mainResponse.json();
       const filteredMainData = mainData.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
@@ -219,17 +281,13 @@ const Grader = () => {
       setSelectedFiles(filteredMainData);
 
       // Fetch example files
-      const exampleResponse = await fetch(`/api/get-essays?userId=${userId}&batchName=${batchName}&type=examples`);
+      const exampleResponse = await fetch(`/api/get-essays?userId=${userId}&batchId=${batchId}&type=examples`);
       if (!exampleResponse.ok) throw new Error('Failed to fetch example files');
       const exampleData = await exampleResponse.json();
       const filteredExampleData = exampleData.filter((file: FileInfo) => file.name !== '.emptyFolderPlaceholder');
       setExampleFiles(filteredExampleData);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch files",
-        variant: "destructive",
-      });
+      console.error('Error fetching files:', error);
     }
   };
 
@@ -286,8 +344,8 @@ const Grader = () => {
     try {
       for (const file of files) {
         const path = isExample
-          ? `${userId}/${batchName}/examples/${file.name}`
-          : `${userId}/${batchName}/tograde/${file.name}`;
+          ? `${userId}/${batchId}/examples/${file.name}`
+          : `${userId}/${batchId}/tograde/${file.name}`;
   
         const { error } = await supabase.storage
           .from('essays')
@@ -301,7 +359,7 @@ const Grader = () => {
         description: `Files uploaded successfully`,
       });
   
-      await fetchFiles(userId, batchName);
+      await fetchFiles(userId, batchId);
     } catch (error) {
       toast({
         title: "Error",
@@ -320,31 +378,32 @@ const Grader = () => {
   };
 
   const handleStartBatch = async () => {
-    setIsStartable(false)
-    if (!selectedRubric || !batchName || selectedFiles.length === 0) {
-      console.log('batchName', batchName)
-      console.log('selectedFiles', selectedFiles)
-      console.log('selectedRubric', selectedRubric)
-      console.log('userId', userId)
+    setIsStartable(false);
+    
+    // Validate required fields
+    if (!selectedRubric || !batchId || selectedFiles.length === 0 || !selectedClass) {
       toast({
         title: "Error",
-        description: "Please select a rubric, enter a batch name, and upload files",
+        description: "Missing required fields",
         variant: "destructive",
       });
       return;
     }
 
-    if (!selectedClass) {
+    // Validate that all files have student assignments
+    const unassignedFiles = selectedFiles.filter(file => !fileAssignments[file.name]);
+    if (unassignedFiles.length > 0) {
       toast({
         title: "Error",
-        description: "Please select a class",
+        description: `${unassignedFiles.length} files are not assigned to students`,
         variant: "destructive",
       });
       return;
     }
 
     try {
-      console.log('trying')
+      console.log('Sending file assignments:', fileAssignments);
+      
       const response = await fetch('/api/start-batch', {
         method: 'POST',
         headers: {
@@ -355,25 +414,37 @@ const Grader = () => {
           exampleFiles,
           exampleGrades,
           rubricId: selectedRubric.id,
-          batchName,
+          batchId,
           userId,
           classId: selectedClass,
-          studentIds: selectedStudents,
           fileAssignments,
         }),
       });
-      if (!response.ok) throw new Error('Failed to start batch');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || 'Failed to start batch');
+      }
+
+      const result = await response.json();
+      console.log('Batch started with results:', result);
+
       toast({
         title: "Success",
-        description: "Batch started successfully",
+        description: `Started grading ${Object.keys(result.studentFileMap).length} essays`,
       });
+      
+      // Optionally redirect to status page
+      // router.push(`/dashboard/batch-status/${batchId}`);
     } catch (error) {
+      console.error('Start batch error:', error);
       toast({
         title: "Error",
-        description: "Failed to start batch",
+        description: error instanceof Error ? error.message : "Failed to start batch",
         variant: "destructive",
       });
     } finally {
+      setIsStartable(true);
     }
   };
 
@@ -440,11 +511,20 @@ const Grader = () => {
                 <SelectValue placeholder="Select Class" />
               </SelectTrigger>
               <SelectContent>
-                {classes.map((classData) => (
-                  <SelectItem key={classData.id} value={classData.id.toString()}>
-                    {classData.name}
+                {classes && classes.length > 0 ? (
+                  classes.map((classData) => (
+                    <SelectItem 
+                      key={classData.id} 
+                      value={classData.id.toString()}
+                    >
+                      {classData.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-classes" disabled>
+                    No classes available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -471,14 +551,25 @@ const Grader = () => {
           </Select>
         </div>
           <RubricMaker userId={userId}/>
-        <div className="relative">
-          <Input
-            className="w-72 h-[67px] bg-[#85e0a3] rounded-[17px] pl-12 text-[#00000080] font-bold"
-            placeholder="Batch Name"
-            value={batchName}
-            onChange={(e) => setBatchName(e.target.value)}
-          />
-          <PencilIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6  text-[#00000080]" />
+        <div className="flex gap-4 items-center">
+          <div className="relative flex-1">
+            <Input
+              className="w-full h-[67px] bg-[#85e0a3] rounded-[17px] pl-12 text-[#00000080] font-bold"
+              placeholder="Batch Name"
+              value={batchName}
+              onChange={(e) => setBatchName(e.target.value)}
+              disabled={!!batchId}
+            />
+            <PencilIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-6 w-6 text-[#00000080]" />
+          </div>
+          {!batchId && (
+            <Button
+              onClick={createBatch}
+              className="h-[67px] bg-[#85e0a3] hover:bg-[#75d093]"
+            >
+              Create Batch
+            </Button>
+          )}
         </div>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -492,24 +583,31 @@ const Grader = () => {
                     className="flex justify-between items-center text-sm text-gray-600 p-2 hover:bg-gray-100 rounded-md"
                   >
                     <span className="truncate mr-4 flex-1">{file.name}</span>
-                    <Select
-                      value={fileAssignments[file.name] || ''}
-                      onValueChange={(value) => handleStudentAssignment(file.name, value)}
-                      disabled={!selectedClass}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Select student" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes
-                          .find(c => c.id.toString() === selectedClass)
-                          ?.students.map((student) => (
-                            <SelectItem key={student.id} value={student.id}>
-                              {student.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-2">
+                      {fileAssignments[file.name] && (
+                        <span className="text-gray-500">
+                          {studentLookup[fileAssignments[file.name]]}
+                        </span>
+                      )}
+                      <Select
+                        value={fileAssignments[file.name] || ''}
+                        onValueChange={(value) => handleStudentAssignment(file.name, value)}
+                        disabled={!selectedClass}
+                      >
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Select student" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classes
+                            .find(c => c.id.toString() === selectedClass)
+                            ?.students.map((student) => (
+                              <SelectItem key={student.id} value={student.id}>
+                                {studentLookup[student.id] || student.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 ))}
               </div>

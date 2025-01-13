@@ -1,56 +1,87 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { PrismaClient, Question } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === 'POST') {
-    const { selectedFiles, exampleFiles, exampleGrades, rubricId, batchName, userId } = req.body;
-    const fileUrls = selectedFiles.map((file: any) => file.url);
-    console.log('fileUrls:', fileUrls);
-    try {
-        const batch = await prisma.batch.create({
-            data: {            
-            userId: userId,
-            name: batchName,
-            rubricId: rubricId,
-            fileUrls
-            },
-          });
-        console.log('batch:', batch);
-        
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-          const gradeEssayRequest = async (fileUrl: string, exampleFiles: any, exampleGrades: any) => {
-            const response = await fetch(`${process.env.HOSTED_URL}/api/grade-essay`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ pdfUrl: fileUrl, rubricId, userId, batchId: batch.id, exampleFiles, exampleGrades }),
-            });
-    
-            if (!response.ok) {
-              throw new Error(`Failed to grade essay for file: ${fileUrl}`);
-            }
-    
-            const result = await response.json();
-            return result;
-          };
-    
-          // Send concurrent requests to grade-essay
-          const gradingResults = await Promise.all(
-            fileUrls.map((fileUrl: string) => gradeEssayRequest(fileUrl, exampleFiles, exampleGrades))
-          );
-    
-          // Return the batch ID and grading results
-          res.status(200).json({ success: true, batchId: batch.id, gradingResults });
-    } catch (error) {
-      console.error('Error starting batch:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    } finally {
-      await prisma.$disconnect();
-    }
-  } else {
-    res.status(405).json({ error: 'Method Not Allowed' });
+  try {
+    const { 
+      selectedFiles, 
+      exampleFiles, 
+      exampleGrades, 
+      rubricId, 
+      batchId, 
+      userId,
+      classId,
+      fileAssignments 
+    } = req.body;
+
+    console.log('Selected files:', selectedFiles);
+    console.log('file assignments:', fileAssignments);
+    // Create a map of studentId -> fileUrl
+    const studentFileMap: Record<string, string> = {};
+    selectedFiles.forEach((file: any) => {
+      const studentId = fileAssignments[file.name];
+      if (studentId) {
+        studentFileMap[studentId] = file.url;
+      }
+    });
+
+    console.log('Student file map:', studentFileMap);
+
+    const batch = await prisma.batch.update({
+      where: {
+        id: Number(batchId)
+      },
+      data: {
+        rubricId: Number(rubricId),
+        status: 'processing',
+        fileUrls: selectedFiles.map((file: any) => file.url || '')
+      }
+    });
+
+    // Process each student's file
+    const gradingPromises = Object.entries(studentFileMap).map(([studentId, fileUrl]) => {
+      return fetch(`${process.env.HOSTED_URL}/api/grade-essay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pdfUrl: fileUrl,
+          rubricId: Number(rubricId),
+          userId, // teacher's ID
+          studentId, // student's ID
+          batchId: Number(batchId),
+          exampleFiles,
+          exampleGrades
+        }),
+      });
+    });
+
+    const gradingResults = await Promise.all(gradingPromises);
+    const gradingResponses = await Promise.all(
+      gradingResults.map(result => result.json())
+    );
+
+    return res.status(200).json({ 
+      success: true, 
+      batchId: batch.id,
+      studentFileMap,
+      gradingResults: gradingResponses
+    });
+
+  } catch (error) {
+    console.error('Error in start-batch:', error);
+    return res.status(500).json({ 
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  } finally {
+    await prisma.$disconnect();
   }
 }

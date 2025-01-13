@@ -15,14 +15,14 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { userId, batchName, type } = req.query;
+    const { userId, batchId, type } = req.query;
 
     if (!userId || typeof userId !== 'string') {
         return res.status(400).json({ error: 'User ID is required' });
     }
 
-    if (!batchName || typeof batchName !== 'string') {
-        return res.status(400).json({ error: 'Batch name is required' });
+    if (!batchId || typeof batchId !== 'string') {
+        return res.status(400).json({ error: 'Batch ID is required' });
     }
 
     if (!type || typeof type !== 'string') {
@@ -33,7 +33,7 @@ export default async function handler(
         // List all files in the specific folder (tograde or examples)
         const { data: files, error } = await supabase.storage
             .from('essays')
-            .list(`${userId}/${batchName}/${type}`);
+            .list(`${userId}/${batchId}/${type}`);
     
         if (error) throw error;
 
@@ -42,7 +42,7 @@ export default async function handler(
             (files || []).map(async (file) => {
                 const { data: { publicUrl } } = supabase.storage
                     .from('essays')
-                    .getPublicUrl(`${userId}/${batchName}/${type}/${file.name}`);
+                    .getPublicUrl(`${userId}/${batchId}/${type}/${file.name}`);
 
                 return {
                     name: file.name,
